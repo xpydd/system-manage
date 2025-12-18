@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>角色管理 - 企业后台管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="data.js"></script>
+  <script src="layout.js"></script>
+</head>
+<body class="bg-gray-100 font-sans antialiased h-screen flex overflow-hidden" id="app">
+
+  <!-- 侧边栏和Header通过 layout.js 动态渲染 -->
+
+  <!-- 主内容区域容器 -->
+  <div class="flex-1 flex flex-col min-w-0 bg-gray-50" id="main-content">
+
+    <main class="flex-1 overflow-auto p-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+        
+        <!-- 左侧：角色列表 -->
+        <div class="lg:col-span-4 flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <h3 class="font-semibold text-gray-700">角色列表</h3>
+            <button onclick="createRole()" class="text-blue-600 hover:text-blue-800 text-sm font-medium">+ 新增角色</button>
+          </div>
+          <div class="flex-1 overflow-y-auto p-2" id="role-list">
+             <!-- JS 渲染 -->
+          </div>
+        </div>
+
+        <!-- 右侧：权限配置 -->
+        <div class="lg:col-span-8 flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <div>
+              <h3 class="font-semibold text-gray-900" id="role-title">选择角色</h3>
+              <p class="text-xs text-gray-500 mt-1" id="role-desc">请从左侧选择角色进行权限配置</p>
+            </div>
+            <div class="flex space-x-2">
+               <button onclick="deleteRole()" class="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium">删除角色</button>
+               <button onclick="savePermissions()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">保存配置</button>
+            </div>
+          </div>
+          
+          <!-- Tabs -->
+          <div class="border-b border-gray-200 px-6">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+              <button onclick="switchTab('permissions')" id="tab-permissions" class="tab-btn border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                权限配置
+              </button>
+              <button onclick="switchTab('users')" id="tab-users" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                关联用户
+              </button>
+            </nav>
+          </div>
+
+          <div class="flex-1 overflow-y-auto p-6">
+            
+            <!-- 权限配置内容 -->
+            <div id="content-permissions" class="tab-content">
+               <!-- 权限树 -->
+               <div class="space-y-6" id="permission-tree">
+                 <!-- JS 渲染 -->
+               </div>
+            </div>
+
+            <!-- 关联用户内容 -->
+            <div id="content-users" class="tab-content hidden">
+              <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户名</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">手机号</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">所属组织</th>
+                      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200" id="role-user-list">
+                    <!-- JS 渲染 -->
+                  </tbody>
+                </table>
+              </div>
+              <p class="text-xs text-gray-500 mt-2">* 仅显示部分关联用户示例</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Role Modal -->
+  <div id="add-role-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAddRoleModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <h3 class="text-lg leading-6 font-medium text-gray-900" id="add-role-modal-title">新增角色</h3>
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">角色名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="new-role-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="请输入角色名称">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">角色描述 <span class="text-red-500">*</span></label>
+              <textarea id="new-role-description" required rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="请输入角色描述"></textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">角色级别 <span class="text-red-500">*</span></label>
+              <select id="new-role-level" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white">
+                <option value="">请选择角色级别</option>
+                <option value="系统级">系统级</option>
+                <option value="企业级">企业级</option>
+                <option value="项目级">项目级</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" onclick="saveNewRole()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+            保存
+          </button>
+          <button type="button" onclick="closeAddRoleModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      renderLayout('角色管理');
+      renderRoleList();
+      if(mockData.roles.length > 0) {
+        selectRole(mockData.roles[0].id);
+      }
+    });
+
+    let currentRoleId = null;
+
+    // 所有可能的权限定义
+    const allPermissions = [
+      {
+        module: "企业管理",
+        actions: ["查看", "新增", "编辑", "删除"]
+      },
+      {
+        module: "项目管理",
+        actions: ["查看", "新增", "编辑", "删除"]
+      },
+      {
+        module: "用户管理",
+        actions: ["查看", "新增", "编辑", "删除"]
+      },
+      {
+        module: "角色管理",
+        actions: ["查看", "新增", "编辑", "删除"]
+      }
+    ];
+
+    function renderRoleList() {
+      const container = document.getElementById('role-list');
+      container.innerHTML = '';
+
+      mockData.roles.forEach(role => {
+        const item = document.createElement('div');
+        item.className = `cursor-pointer p-4 rounded-lg mb-1 transition-colors hover:bg-gray-50 border border-transparent ${currentRoleId === role.id ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200' : ''}`;
+        item.onclick = () => selectRole(role.id);
+        
+        item.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <h4 class="text-sm font-semibold text-gray-900">${role.name}</h4>
+              <p class="text-xs text-gray-500 mt-1">${role.description}</p>
+            </div>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+              ${role.level}
+            </span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function selectRole(id) {
+      currentRoleId = id;
+      const role = mockData.roles.find(r => r.id === id);
+      if(!role) return;
+
+      renderRoleList(); // 更新高亮
+
+      document.getElementById('role-title').textContent = role.name;
+      document.getElementById('role-desc').textContent = role.description;
+
+      renderPermissions(role.permissions);
+      renderRoleUsers(role.name);
+    }
+
+    function renderRoleUsers(roleName) {
+      const tbody = document.getElementById('role-user-list');
+      tbody.innerHTML = '';
+      
+      let foundUsers = [];
+
+      // 1. 全局用户列表
+      if (mockData.users) {
+        mockData.users.forEach(u => {
+          if (u.role === roleName) {
+            foundUsers.push({ name: u.fullName, phone: u.phone, org: u.enterprise });
+          }
+        });
+      }
+
+      // 2. 遍历企业下的项目成员
+      mockData.enterprises.forEach(ent => {
+        ent.projects.forEach(proj => {
+          if (proj.teamMembers) {
+            proj.teamMembers.forEach(tm => {
+              if (tm.role === roleName) {
+                foundUsers.push({ name: tm.name, phone: tm.phone, org: proj.name });
+              }
+            });
+          }
+          if (proj.subcontractors) {
+            proj.subcontractors.forEach(sub => {
+              if (sub.users) {
+                sub.users.forEach(u => {
+                   if (u.role === roleName) {
+                     foundUsers.push({ name: u.name, phone: u.phone, org: `${proj.name}-${sub.name}` });
+                   }
+                });
+              }
+            });
+          }
+        });
+      });
+
+      // 去重 (简单按名字+手机号去重)
+      foundUsers = foundUsers.filter((v,i,a)=>a.findIndex(t=>(t.phone === v.phone))===i);
+
+      if (foundUsers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500 text-sm">暂无关联用户</td></tr>';
+        return;
+      }
+
+      foundUsers.forEach(u => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${u.name}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${u.phone}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${u.org}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <button class="text-red-600 hover:text-red-900">移除</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`content-${tabName}`).classList.remove('hidden');
+      
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-blue-500', 'text-blue-600');
+        btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+      });
+      
+      document.getElementById(`tab-${tabName}`).classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+      document.getElementById(`tab-${tabName}`).classList.add('border-blue-500', 'text-blue-600');
+    }
+
+    function createRole() {
+      const modal = document.getElementById('add-role-modal');
+      if (!modal) {
+        console.error('找不到新增角色弹窗元素');
+        return;
+      }
+      
+      // 重置表单
+      document.getElementById('new-role-name').value = '';
+      document.getElementById('new-role-description').value = '';
+      document.getElementById('new-role-level').value = '';
+      document.getElementById('add-role-modal-title').textContent = '新增角色';
+      
+      // 显示模态框
+      modal.classList.remove('hidden');
+    }
+    
+    window.createRole = createRole;
+
+    function closeAddRoleModal() {
+      const modal = document.getElementById('add-role-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+    }
+    
+    window.closeAddRoleModal = closeAddRoleModal;
+
+    function saveNewRole() {
+      const name = document.getElementById('new-role-name').value.trim();
+      const description = document.getElementById('new-role-description').value.trim();
+      const level = document.getElementById('new-role-level').value;
+
+      // 必填项校验
+      if (!name) {
+        alert('请输入角色名称');
+        document.getElementById('new-role-name').focus();
+        return;
+      }
+
+      if (!description) {
+        alert('请输入角色描述');
+        document.getElementById('new-role-description').focus();
+        return;
+      }
+
+      if (!level) {
+        alert('请选择角色级别');
+        document.getElementById('new-role-level').focus();
+        return;
+      }
+
+      // 检查角色名称是否已存在
+      const exists = mockData.roles.find(r => r.name === name);
+      if (exists) {
+        alert('该角色名称已存在');
+        document.getElementById('new-role-name').focus();
+        return;
+      }
+
+      const newRole = {
+        id: Date.now(),
+        name: name,
+        description: description,
+        level: level,
+        permissions: []
+      };
+
+      mockData.roles.push(newRole);
+      renderRoleList();
+      selectRole(newRole.id);
+      closeAddRoleModal();
+      
+      alert(`角色 "${name}" 创建成功！`);
+    }
+    
+    window.saveNewRole = saveNewRole;
+
+    function deleteRole() {
+      if (!currentRoleId) return;
+      const roleIndex = mockData.roles.findIndex(r => r.id === currentRoleId);
+      if (roleIndex === -1) return;
+
+      if (confirm(`确定要删除角色 "${mockData.roles[roleIndex].name}" 吗？`)) {
+        mockData.roles.splice(roleIndex, 1);
+        renderRoleList();
+        if (mockData.roles.length > 0) {
+          selectRole(mockData.roles[0].id);
+        } else {
+          currentRoleId = null;
+          document.getElementById('permission-tree').innerHTML = '';
+          document.getElementById('role-title').textContent = '未选择角色';
+          document.getElementById('role-desc').textContent = '';
+        }
+      }
+    }
+
+    function renderPermissions(userPermissions) {
+      const container = document.getElementById('permission-tree');
+      container.innerHTML = '';
+
+      allPermissions.forEach((group, groupIndex) => {
+        const section = document.createElement('div');
+        section.className = "border border-gray-200 rounded-lg overflow-hidden";
+        
+        // 检查该组是否有全部权限
+        const groupActions = group.actions.map(a => `${group.module}-${a}`);
+        const checkedCount = groupActions.filter(a => userPermissions.includes(a)).length;
+        const isAllChecked = checkedCount === groupActions.length;
+        const isIndeterminate = checkedCount > 0 && checkedCount < groupActions.length;
+
+        section.innerHTML = `
+          <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center">
+            <input type="checkbox" id="group-${groupIndex}" onchange="toggleGroup(${groupIndex})" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" ${isAllChecked ? 'checked' : ''}>
+            <span class="ml-2 font-medium text-gray-700">${group.module}</span>
+          </div>
+          <div class="p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-white" id="group-content-${groupIndex}">
+            ${group.actions.map(action => {
+              const permString = `${group.module}-${action}`;
+              const isChecked = userPermissions.includes(permString);
+              return `
+                <label class="inline-flex items-center">
+                  <input type="checkbox" value="${permString}" class="perm-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" ${isChecked ? 'checked' : ''}>
+                  <span class="ml-2 text-sm text-gray-600">${action}</span>
+                </label>
+              `;
+            }).join('')}
+          </div>
+        `;
+        container.appendChild(section);
+        
+        // 设置 indeterminate 状态
+        if (isIndeterminate) {
+            document.getElementById(`group-${groupIndex}`).indeterminate = true;
+        }
+      });
+    }
+
+    function toggleGroup(groupIndex) {
+        const groupCheckbox = document.getElementById(`group-${groupIndex}`);
+        const content = document.getElementById(`group-content-${groupIndex}`);
+        const checkboxes = content.querySelectorAll('input[type="checkbox"]');
+        
+        checkboxes.forEach(cb => {
+            cb.checked = groupCheckbox.checked;
+        });
+    }
+
+    function savePermissions() {
+        // 收集所有选中的权限
+        const checkboxes = document.querySelectorAll('.perm-checkbox:checked');
+        const selectedPerms = Array.from(checkboxes).map(cb => cb.value);
+        
+        // 更新 mockData (内存中)
+        const role = mockData.roles.find(r => r.id === currentRoleId);
+        if (role) {
+            role.permissions = selectedPerms;
+            alert(`已保存 ${role.name} 的权限配置 (${selectedPerms.length} 项)`);
+            // 重新渲染以更新父级勾选状态
+            renderPermissions(selectedPerms);
+        }
+    }
+  </script>
+</body>
+</html>

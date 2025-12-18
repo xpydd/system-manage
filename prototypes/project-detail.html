@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>项目详情 - 企业后台管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="data.js"></script>
+  <script src="layout.js"></script>
+</head>
+<body class="bg-gray-100 font-sans antialiased h-screen flex overflow-hidden" id="app">
+
+  <!-- 侧边栏和Header通过 layout.js 动态渲染 -->
+
+  <!-- 主内容区域容器 -->
+  <div class="flex-1 flex flex-col min-w-0 bg-gray-50" id="main-content">
+
+    <main class="flex-1 overflow-auto p-6">
+      
+      <!-- 返回按钮 -->
+      <div class="mb-6 flex items-center">
+        <a href="project.html" class="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+          <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          返回项目列表
+        </a>
+      </div>
+
+      <div id="loading" class="text-center py-10 text-gray-500">加载中...</div>
+      
+      <div id="project-content" class="hidden space-y-6">
+        
+        <!-- 顶部概览卡片 -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <div>
+              <div class="flex items-center space-x-3">
+                <h1 class="text-2xl font-bold text-gray-900" id="detail-name">-</h1>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium" id="detail-status">-</span>
+              </div>
+            </div>
+            <div class="mt-4 md:mt-0 flex space-x-3">
+              <button onclick="openEditModal()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">编辑项目</button>
+              <button onclick="openProjectQuotaConsumptionModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">资源记录</button>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-6 border-t border-gray-100 pt-6">
+            <div>
+              <p class="text-sm text-gray-500">项目负责人</p>
+              <p class="font-medium text-gray-900 mt-1" id="detail-admin">-</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">联系电话</p>
+              <p class="font-medium text-gray-900 mt-1" id="detail-admin-phone">-</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">当前版本</p>
+              <p class="font-medium text-gray-900 mt-1" id="detail-version">-</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">所属企业</p>
+              <p class="font-medium text-gray-900 mt-1" id="detail-enterprise">-</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">项目ID</p>
+              <p class="font-medium text-gray-900 mt-1 font-mono" id="detail-id">-</p>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <div class="border-b border-gray-200 mt-8">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+              <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                概览
+              </button>
+              <button onclick="switchTab('devices')" id="tab-devices" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                设备管理
+              </button>
+              <button onclick="switchTab('members')" id="tab-members" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                成员管理
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        <!-- Tab 内容 -->
+        
+        <!-- 概览 Tab -->
+        <div id="content-overview" class="tab-content space-y-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 套餐额度信息 (原代码) -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h3 class="font-semibold text-gray-800 mb-4">套餐额度信息</h3>
+              <div class="space-y-4" id="quota-list"></div>
+            </div>
+            
+            <!-- 资源趋势图表 (新增) -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h3 class="font-semibold text-gray-800 mb-4">资源使用趋势 (近7天)</h3>
+              <div class="h-64">
+                <canvas id="projectChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 设备管理 Tab -->
+        <div id="content-devices" class="tab-content hidden space-y-6">
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="font-semibold text-gray-800" id="device-tab-count">设备列表</h3>
+              <div class="flex gap-2">
+                <input type="text" placeholder="搜索设备..." class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-blue-500 focus:border-blue-500">
+                <select class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-blue-500 focus:border-blue-500">
+                  <option>全部状态</option>
+                  <option>在线</option>
+                  <option>离线</option>
+                </select>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">设备名称</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">位置</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP地址</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="device-list-full">
+                  <!-- JS 渲染 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 成员管理 Tab -->
+        <div id="content-members" class="tab-content hidden space-y-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 项目直属用户 -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold text-gray-800">项目直属成员</h3>
+                <button class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-100" onclick="openAddMemberModal()">添加成员</button>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">姓名</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">角色</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">联系方式</th>
+                      <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-200" id="team-list">
+                    <!-- JS 渲染 -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 分包商及用户 -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold text-gray-800">分包组织</h3>
+                <button class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-100" onclick="openAddSubcontractorModal()">添加分包</button>
+              </div>
+              <div class="space-y-4" id="subcontractor-list"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Add/Edit Member Modal -->
+  <div id="add-member-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAddMemberModal()"></div>
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <h3 class="text-lg leading-6 font-medium text-gray-900" id="member-modal-title">添加成员</h3>
+          <input type="hidden" id="editing-member-index">
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">姓名 <span class="text-red-500">*</span></label>
+              <input type="text" id="new-member-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 sm:text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="请输入姓名">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">手机号（账号） <span class="text-red-500">*</span></label>
+              <input type="text" id="new-member-phone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 sm:text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="请输入11位手机号">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">角色 <span class="text-red-500">*</span></label>
+              <select id="new-member-role" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 sm:text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white">
+                <option value="">请选择角色</option>
+                <option value="普通用户">普通用户</option>
+                <option value="项目管理员">项目管理员</option>
+                <option value="运维工程师">运维工程师</option>
+                <option value="开发工程师">开发工程师</option>
+                <option value="测试工程师">测试工程师</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" onclick="saveMember()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm">保存</button>
+          <button type="button" onclick="closeAddMemberModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Subcontractor Modal -->
+  <div id="add-sub-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAddSubcontractorModal()"></div>
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <h3 class="text-lg leading-6 font-medium text-gray-900">添加分包组织</h3>
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">分包单位名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="new-sub-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 sm:text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="请输入分包单位名称">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">分包负责人姓名 <span class="text-red-500">*</span></label>
+              <input type="text" id="new-sub-admin" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 sm:text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="请输入负责人姓名">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">分包负责人手机号（账号） <span class="text-red-500">*</span></label>
+              <input type="text" id="new-sub-phone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 sm:text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="请输入11位手机号">
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" onclick="saveNewSubcontractor()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm">保存</button>
+          <button type="button" onclick="closeAddSubcontractorModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Project Modal (Recovered if missing, or just placeholder) -->
+  <div id="edit-project-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeEditModal()"></div>
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <h3 class="text-lg leading-6 font-medium text-gray-900">编辑项目</h3>
+          <div class="mt-4 space-y-4">
+             <div><label class="block text-sm font-medium text-gray-700">项目名称</label><input type="text" id="edit-project-name" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></div>
+             <div><label class="block text-sm font-medium text-gray-700">负责人</label><input type="text" id="edit-admin-name" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></div>
+             <div><label class="block text-sm font-medium text-gray-700">负责人手机</label><input type="text" id="edit-admin-phone" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button onclick="saveProjectChanges()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm">保存</button>
+          <button onclick="closeEditModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Project Quota Consumption Modal -->
+  <div id="project-quota-consumption-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="quota-modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeProjectQuotaConsumptionModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="project-quota-modal-title">额度消费记录</h3>
+          
+          <!-- 筛选框（项目名称已固定，不显示筛选） -->
+          <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">资源类型</label>
+                <select id="project-quota-filter-type" onchange="filterProjectQuotaConsumption()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  <option value="">全部类型</option>
+                  <option value="storage">存储空间</option>
+                  <option value="aiTokens">AI 使用量</option>
+                  <option value="liveStream">视频直播</option>
+                  <option value="baseLicense">基础版账号</option>
+                  <option value="premiumLicense">旗舰版账号</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">开始日期</label>
+                <input type="date" id="project-quota-filter-start" onchange="filterProjectQuotaConsumption()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">结束日期</label>
+                <input type="date" id="project-quota-filter-end" onchange="filterProjectQuotaConsumption()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- 表格 -->
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">时间</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">资源类型</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">消费量</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作类型</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200" id="project-quota-consumption-body">
+                <!-- JS 渲染 -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 分页控件 -->
+          <div class="bg-white px-4 py-3 border-t border-gray-200 flex items-center justify-between sm:px-6 mt-4">
+            <div class="flex-1 flex justify-between sm:hidden">
+              <button onclick="changeProjectQuotaPage(currentProjectQuotaPage - 1)" id="project-quota-prev-btn-mobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                上一页
+              </button>
+              <button onclick="changeProjectQuotaPage(currentProjectQuotaPage + 1)" id="project-quota-next-btn-mobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                下一页
+              </button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p class="text-sm text-gray-700" id="project-quota-pagination-info">
+                  显示 <span class="font-medium">0</span> 到 <span class="font-medium">0</span> 条，共 <span class="font-medium">0</span> 条
+                </p>
+              </div>
+              <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button onclick="changeProjectQuotaPage(currentProjectQuotaPage - 1)" id="project-quota-prev-btn" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">上一页</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                    第 <span id="project-quota-current-page">1</span> 页 / 共 <span id="project-quota-total-pages">1</span> 页
+                  </span>
+                  <button onclick="changeProjectQuotaPage(currentProjectQuotaPage + 1)" id="project-quota-next-btn" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">下一页</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" onclick="closeProjectQuotaConsumptionModal()" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:ml-3 sm:w-auto sm:text-sm">
+            关闭
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentProject = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderLayout('项目详情');
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const projectId = parseInt(urlParams.get('id'));
+
+      if (!projectId) {
+        document.getElementById('loading').textContent = '未指定项目ID';
+        return;
+      }
+
+      const projectData = findProject(projectId);
+      if (projectData) {
+        currentProject = projectData; // 保存当前项目数据
+        renderProject(projectData);
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('project-content').classList.remove('hidden');
+      } else {
+        document.getElementById('loading').textContent = '未找到项目信息';
+      }
+    });
+
+    function openEditModal() {
+      if (!currentProject) return;
+      
+      document.getElementById('edit-project-name').value = currentProject.name;
+      document.getElementById('edit-admin-name').value = currentProject.projectAdmin;
+      
+      // 获取负责人手机号
+      const adminMember = currentProject.teamMembers ? currentProject.teamMembers.find(m => m.name === currentProject.projectAdmin) : null;
+      document.getElementById('edit-admin-phone').value = adminMember ? adminMember.phone : '';
+      
+      document.getElementById('edit-project-modal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-project-modal').classList.add('hidden');
+    }
+
+    function saveProjectChanges() {
+      if (!currentProject) return;
+
+      const newName = document.getElementById('edit-project-name').value;
+      const newAdminName = document.getElementById('edit-admin-name').value;
+      const newAdminPhone = document.getElementById('edit-admin-phone').value;
+
+      if (!newName || !newAdminName || !newAdminPhone) {
+         alert("请填写完整信息");
+         return;
+      }
+      
+      if (!/^1[3-9]\d{9}$/.test(newAdminPhone)) {
+        alert("请输入正确的11位手机号");
+        return;
+      }
+
+      // 检查负责人是否变更
+      const oldAdminName = currentProject.projectAdmin;
+      const adminMember = currentProject.teamMembers ? currentProject.teamMembers.find(m => m.name === oldAdminName) : null;
+      const oldPhone = adminMember ? adminMember.phone : '';
+
+      if (newAdminPhone !== oldPhone) {
+         if (confirm(`确认更换项目负责人吗？\n原负责人：${oldAdminName} (${oldPhone})\n新负责人：${newAdminName} (${newAdminPhone})\n这将自动创建/更新用户账号并转移管理权限。`)) {
+            // 1. 更新项目基础信息
+            currentProject.name = newName;
+            currentProject.projectAdmin = newAdminName;
+
+            // 2. 处理用户逻辑
+            let existingUser = null;
+            if (mockData.users) {
+              existingUser = mockData.users.find(u => u.username === newAdminPhone);
+            }
+
+            if (!existingUser) {
+              // 创建新用户
+              const newUser = {
+                id: Date.now(),
+                username: newAdminPhone,
+                fullName: newAdminName,
+                phone: newAdminPhone,
+                role: "项目管理员",
+                enterprise: currentProject.enterpriseName || "未知企业",
+                project: newName,
+                status: "激活",
+                createdAt: new Date().toISOString().split('T')[0]
+              };
+              if (mockData.users) mockData.users.push(newUser);
+              alert(`已自动创建新负责人账号：${newAdminPhone}`);
+            } else {
+               alert(`新负责人账号 ${newAdminPhone} 已存在，已赋予权限。`);
+            }
+
+            // 3. 更新团队成员列表 (添加新负责人)
+            if (!currentProject.teamMembers) currentProject.teamMembers = [];
+            currentProject.teamMembers.unshift({
+              id: Date.now() + 1,
+              name: newAdminName,
+              role: "项目管理员",
+              phone: newAdminPhone
+            });
+         } else {
+            return; // 取消
+         }
+      } else {
+         // 仅更新基础信息
+         currentProject.name = newName;
+         currentProject.projectAdmin = newAdminName; 
+         
+         // 如果仅仅是改了名字，同步更新成员列表里的名字
+         if (adminMember) {
+             adminMember.name = newAdminName;
+         }
+      }
+
+      // 刷新视图
+      renderProject(currentProject);
+      closeEditModal();
+    }
+
+    function findProject(id) {
+      let found = null;
+      mockData.enterprises.some(ent => {
+        const proj = ent.projects.find(p => p.id === id);
+        if (proj) {
+          found = { ...proj, enterpriseName: ent.name };
+          return true;
+        }
+        return false;
+      });
+      return found;
+    }
+
+    let chartInstance = null;
+
+    function renderProject(proj) {
+      // 基础信息
+      document.getElementById('detail-name').textContent = proj.name;
+      document.getElementById('detail-admin').textContent = proj.projectAdmin;
+      // 获取负责人手机号
+      let adminPhone = '-';
+      if (proj.teamMembers && proj.teamMembers.length > 0) {
+        const adminMember = proj.teamMembers.find(m => m.name === proj.projectAdmin);
+        if (adminMember && adminMember.phone) {
+          adminPhone = adminMember.phone;
+        }
+      }
+      // 如果没有找到，尝试从其他地方获取（例如mockData.users）
+      if (adminPhone === '-' && typeof mockData !== 'undefined' && mockData.users) {
+        const user = mockData.users.find(u => u.fullName === proj.projectAdmin || u.username === proj.projectAdmin);
+        if (user && user.phone) {
+          adminPhone = user.phone;
+        }
+      }
+      document.getElementById('detail-admin-phone').textContent = adminPhone;
+
+      // 显示当前版本
+      const versionText = proj.version || '基础版';
+      const versionEl = document.getElementById('detail-version');
+      versionEl.textContent = versionText;
+      if (versionText === '旗舰版') {
+        versionEl.className = 'font-medium text-purple-600 mt-1';
+      } else {
+        versionEl.className = 'font-medium text-blue-600 mt-1';
+      }
+
+      document.getElementById('detail-enterprise').textContent = proj.enterpriseName;
+      document.getElementById('detail-id').textContent = proj.id;
+      
+      const statusSpan = document.getElementById('detail-status');
+      statusSpan.textContent = proj.status;
+      if (proj.status === '进行中') {
+        statusSpan.className = 'px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
+      } else {
+        statusSpan.className = 'px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800';
+      }
+
+      // 配额信息 (概览 Tab)
+      const quotaContainer = document.getElementById('quota-list');
+      quotaContainer.innerHTML = ''; // 清空旧内容
+      if (proj.quota) {
+        const resources = [
+          { key: 'storage', label: '存储空间', color: 'blue' },
+          { key: 'baseLicense', label: '基础版账号', color: 'green' },
+          { key: 'premiumLicense', label: '旗舰版账号', color: 'purple' },
+          { key: 'aiTokens', label: 'AI 使用量', color: 'indigo' },
+          { key: 'liveStream', label: '视频直播', color: 'pink' }
+        ];
+
+        resources.forEach(res => {
+          const q = proj.quota[res.key];
+          if(!q) return;
+          const pct = Math.round((q.used / q.total) * 100);
+          
+          quotaContainer.innerHTML += `
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-600">${res.label}</span>
+                <span class="font-medium">${q.used} / ${q.total} ${q.unit || ''}</span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2">
+                <div class="bg-${res.color}-500 h-2 rounded-full" style="width: ${pct}%"></div>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        quotaContainer.innerHTML = '<p class="text-gray-500">暂无配额信息</p>';
+      }
+
+      // 图表 (概览 Tab)
+      updateProjectChart();
+
+      // 设备列表 (设备 Tab)
+      const deviceBody = document.getElementById('device-list-full');
+      deviceBody.innerHTML = '';
+      if (proj.devices && proj.devices.length > 0) {
+        document.getElementById('device-tab-count').textContent = `设备列表 (${proj.devices.length})`;
+        proj.devices.forEach(dev => {
+          deviceBody.innerHTML += `
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${dev.name}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${dev.type}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${dev.location}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">192.168.1.${Math.floor(Math.random() * 255)}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${dev.status === 'online' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                  ${dev.status}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button class="text-blue-600 hover:text-blue-900 mr-2">查看</button>
+                <button class="text-gray-600 hover:text-gray-900">配置</button>
+              </td>
+            </tr>
+          `;
+        });
+      } else {
+        deviceBody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-gray-500 text-sm">暂无绑定设备</td></tr>';
+      }
+
+      // 团队成员 (成员 Tab)
+      renderTeamMembers(proj);
+
+      // 分包商 (成员 Tab)
+      renderSubcontractors(proj);
+    }
+
+    function updateProjectChart() {
+      const ctx = document.getElementById('projectChart');
+      if (!ctx) return;
+      
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      // 模拟近7天数据
+      const labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      const dataStorage = [100, 120, 150, 140, 180, 200, 210];
+      const dataAI = [50, 80, 120, 90, 150, 180, 160];
+
+      chartInstance = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '存储增长 (GB)',
+              data: dataStorage,
+              borderColor: 'rgb(59, 130, 246)',
+              tension: 0.4
+            },
+            {
+              label: 'AI 调用 (k)',
+              data: dataAI,
+              borderColor: 'rgb(99, 102, 241)',
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`content-${tabName}`).classList.remove('hidden');
+      
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-blue-500', 'text-blue-600');
+        btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+      });
+      
+      document.getElementById(`tab-${tabName}`).classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+      document.getElementById(`tab-${tabName}`).classList.add('border-blue-500', 'text-blue-600');
+    }
+
+    // 渲染团队成员列表
+    function renderTeamMembers(proj) {
+      const teamList = document.getElementById('team-list');
+      teamList.innerHTML = '';
+      
+      if (!proj.teamMembers) {
+        proj.teamMembers = [];
+      }
+      
+      // 确保项目负责人在列表中（如果不在则添加）
+      const adminMember = proj.teamMembers.find(m => m.name === proj.projectAdmin);
+      if (!adminMember) {
+        // 尝试从基本信息中获取负责人信息
+        let adminPhone = '-';
+        if (typeof mockData !== 'undefined' && mockData.users) {
+          const user = mockData.users.find(u => u.fullName === proj.projectAdmin || u.username === proj.projectAdmin);
+          if (user && user.phone) {
+            adminPhone = user.phone;
+          }
+        }
+        if (adminPhone !== '-') {
+          proj.teamMembers.unshift({
+            id: 'admin-' + proj.id,
+            name: proj.projectAdmin,
+            role: '项目管理员',
+            phone: adminPhone,
+            isAdmin: true
+          });
+        }
+      } else {
+        adminMember.isAdmin = true;
+      }
+      
+      if (proj.teamMembers.length === 0) {
+        teamList.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-gray-500 text-sm">暂无直属成员</td></tr>';
+        return;
+      }
+      
+      proj.teamMembers.forEach((member, index) => {
+        const isAdmin = member.isAdmin || member.name === proj.projectAdmin;
+        teamList.innerHTML += `
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${member.name}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${member.role || '-'}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${member.phone || '-'}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+              ${isAdmin ? 
+                '<span class="text-gray-400 text-xs">默认负责人</span>' :
+                `<button class="text-blue-600 hover:text-blue-900 mr-3" onclick="editMember(${index})">编辑</button>
+                 <button class="text-red-600 hover:text-red-900" onclick="deleteMember(${index})">删除</button>`
+              }
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // 渲染分包组织列表（一个分包单位对应一个分包负责人账号）
+    function renderSubcontractors(proj) {
+      const subList = document.getElementById('subcontractor-list');
+      subList.innerHTML = '';
+      
+      if (!proj.subcontractors || proj.subcontractors.length === 0) {
+        subList.innerHTML = '<p class="text-center text-gray-500 text-sm py-4">暂无分包组织</p>';
+        return;
+      }
+      
+      proj.subcontractors.forEach((sub, index) => {
+        // 解析负责人信息
+        let adminName = '';
+        let adminPhone = '';
+        
+        // 优先使用adminName和adminPhone字段
+        if (sub.adminName) {
+          adminName = sub.adminName;
+        } else if (sub.contactInfo) {
+          // 从contactInfo中解析（格式：负责人：姓名）
+          const match = sub.contactInfo.match(/负责人[：:]\s*(.+)/);
+          if (match) {
+            adminName = match[1];
+          }
+        }
+        
+        // 获取负责人手机号
+        if (sub.adminPhone) {
+          adminPhone = sub.adminPhone;
+        } else if (sub.phone) {
+          adminPhone = sub.phone;
+        } else if (adminName) {
+          // 如果没有手机号，根据负责人姓名生成示例手机号
+          const phoneMap = {
+            '王三': '13800001001',
+            '李四': '13800001002',
+            '张六根': '13800001003',
+            '刘强': '13800001004',
+            '陈民': '13800001005'
+          };
+          adminPhone = phoneMap[adminName] || '13800001000';
+        }
+
+        subList.innerHTML += `
+          <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <h4 class="font-medium text-gray-900 mb-2">${sub.name}</h4>
+                <div class="text-sm text-gray-600 space-y-1">
+                  <p>负责人: ${adminName || '未设置'}</p>
+                  <p>负责人账号: ${adminPhone || '未设置'}</p>
+                </div>
+              </div>
+              <button class="text-red-600 hover:text-red-900 text-sm ml-4" onclick="deleteSubcontractor(${index})">删除</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // 成员管理相关函数
+    function openAddMemberModal() {
+      try {
+        const modal = document.getElementById('add-member-modal');
+        if (!modal) {
+          console.error('找不到添加成员弹窗元素');
+          alert('找不到添加成员弹窗，请检查页面元素');
+          return;
+        }
+        document.getElementById('member-modal-title').textContent = '添加成员';
+        document.getElementById('editing-member-index').value = '';
+        document.getElementById('new-member-name').value = '';
+        document.getElementById('new-member-phone').value = '';
+        document.getElementById('new-member-role').value = '';
+        // 移除hidden类以显示模态框
+        modal.classList.remove('hidden');
+      } catch (error) {
+        console.error('打开添加成员弹窗时出错:', error);
+        alert('打开弹窗时出错: ' + error.message);
+      }
+    }
+    
+    // 确保函数全局可访问
+    window.openAddMemberModal = openAddMemberModal;
+
+    function closeAddMemberModal() {
+      const modal = document.getElementById('add-member-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+    }
+    
+    window.closeAddMemberModal = closeAddMemberModal;
+
+    function editMember(index) {
+      if (!currentProject || !currentProject.teamMembers) return;
+      const member = currentProject.teamMembers[index];
+      if (member.isAdmin || member.name === currentProject.projectAdmin) {
+        alert('不能编辑项目负责人');
+        return;
+      }
+      
+      document.getElementById('member-modal-title').textContent = '编辑成员';
+      document.getElementById('editing-member-index').value = index;
+      document.getElementById('new-member-name').value = member.name;
+      document.getElementById('new-member-phone').value = member.phone || '';
+      document.getElementById('new-member-role').value = member.role || '';
+      document.getElementById('add-member-modal').classList.remove('hidden');
+    }
+
+    function deleteMember(index) {
+      if (!currentProject || !currentProject.teamMembers) return;
+      const member = currentProject.teamMembers[index];
+      if (member.isAdmin || member.name === currentProject.projectAdmin) {
+        alert('不能删除项目负责人');
+        return;
+      }
+      
+      if (confirm(`确定要删除成员 "${member.name}" 吗？`)) {
+        currentProject.teamMembers.splice(index, 1);
+        renderProject(currentProject);
+      }
+    }
+
+    function saveMember() {
+      const name = document.getElementById('new-member-name').value.trim();
+      const phone = document.getElementById('new-member-phone').value.trim();
+      const role = document.getElementById('new-member-role').value;
+      const editingIndex = document.getElementById('editing-member-index').value;
+
+      // 必填项校验
+      if (!name || !phone || !role) {
+        alert('请填写完整信息');
+        return;
+      }
+
+      // 手机号格式校验
+      const phoneRegex = /^1[3-9]\d{9}$/;
+      if (!phoneRegex.test(phone)) {
+        alert('请输入正确的11位手机号');
+        return;
+      }
+
+      if (!currentProject.teamMembers) {
+        currentProject.teamMembers = [];
+      }
+
+      if (editingIndex !== '') {
+        // 编辑模式
+        const index = parseInt(editingIndex);
+        const member = currentProject.teamMembers[index];
+        if (member.isAdmin || member.name === currentProject.projectAdmin) {
+          alert('不能编辑项目负责人');
+          return;
+        }
+        member.name = name;
+        member.phone = phone;
+        member.role = role;
+      } else {
+        // 新增模式
+        // 检查手机号是否已存在
+        const exists = currentProject.teamMembers.find(m => m.phone === phone);
+        if (exists) {
+          alert('该手机号已存在');
+          return;
+        }
+        
+        currentProject.teamMembers.push({
+          id: Date.now(),
+          name: name,
+          phone: phone,
+          role: role
+        });
+      }
+
+      renderProject(currentProject);
+      closeAddMemberModal();
+    }
+
+    // 分包管理相关函数
+    function openAddSubcontractorModal() {
+      try {
+        const modal = document.getElementById('add-sub-modal');
+        if (!modal) {
+          console.error('找不到添加分包弹窗元素');
+          alert('找不到添加分包弹窗，请检查页面元素');
+          return;
+        }
+        document.getElementById('new-sub-name').value = '';
+        document.getElementById('new-sub-admin').value = '';
+        document.getElementById('new-sub-phone').value = '';
+        modal.classList.remove('hidden');
+      } catch (error) {
+        console.error('打开添加分包弹窗时出错:', error);
+        alert('打开弹窗时出错: ' + error.message);
+      }
+    }
+    
+    // 确保函数全局可访问
+    window.openAddSubcontractorModal = openAddSubcontractorModal;
+
+    function closeAddSubcontractorModal() {
+      const modal = document.getElementById('add-sub-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+    }
+    
+    window.closeAddSubcontractorModal = closeAddSubcontractorModal;
+
+    function saveNewSubcontractor() {
+      const name = document.getElementById('new-sub-name').value.trim();
+      const admin = document.getElementById('new-sub-admin').value.trim();
+      const phone = document.getElementById('new-sub-phone').value.trim();
+
+      // 必填项校验
+      if (!name || !admin || !phone) {
+        alert('请填写完整信息');
+        return;
+      }
+
+      // 手机号格式校验
+      const phoneRegex = /^1[3-9]\d{9}$/;
+      if (!phoneRegex.test(phone)) {
+        alert('请输入正确的11位手机号');
+        return;
+      }
+
+      if (!currentProject.subcontractors) {
+        currentProject.subcontractors = [];
+      }
+
+      // 检查分包组织名称是否已存在
+      const exists = currentProject.subcontractors.find(s => s.name === name);
+      if (exists) {
+        alert('该分包组织名称已存在');
+        return;
+      }
+
+      // 检查负责人手机号是否已被其他分包组织使用
+      const phoneExists = currentProject.subcontractors.find(s => s.adminPhone === phone || s.phone === phone);
+      if (phoneExists) {
+        alert('该负责人手机号已被其他分包组织使用');
+        return;
+      }
+
+      currentProject.subcontractors.push({
+        id: Date.now(),
+        name: name,
+        adminName: admin,
+        adminPhone: phone,
+        phone: phone, // 兼容字段
+        contactInfo: `负责人：${admin}`
+      });
+
+      renderProject(currentProject);
+      closeAddSubcontractorModal();
+    }
+
+    function deleteSubcontractor(index) {
+      if (!currentProject || !currentProject.subcontractors) return;
+      const sub = currentProject.subcontractors[index];
+      if (confirm(`确定要删除分包组织 "${sub.name}" 吗？`)) {
+        currentProject.subcontractors.splice(index, 1);
+        renderProject(currentProject);
+      }
+    }
+    
+    // 确保函数全局可访问
+    window.saveNewSubcontractor = saveNewSubcontractor;
+    window.deleteSubcontractor = deleteSubcontractor;
+
+    // 项目额度消费记录相关函数
+    let projectQuotaConsumptionData = []; // 存储消费记录数据
+    let filteredProjectQuotaData = []; // 筛选后的数据
+    let currentProjectQuotaPage = 1; // 当前页码
+    const projectQuotaPageSize = 10; // 每页显示条数
+
+    function openProjectQuotaConsumptionModal() {
+      if (!currentProject) {
+        alert('项目数据未加载');
+        return;
+      }
+
+      const modal = document.getElementById('project-quota-consumption-modal');
+      if (!modal) {
+        console.error('找不到额度消费记录弹窗元素');
+        return;
+      }
+
+      // 设置标题（包含项目名称）
+      const titleEl = document.getElementById('project-quota-modal-title');
+      titleEl.textContent = `${currentProject.name} - 额度消费记录`;
+
+      // 重置筛选条件
+      document.getElementById('project-quota-filter-type').value = '';
+      document.getElementById('project-quota-filter-start').value = '';
+      document.getElementById('project-quota-filter-end').value = '';
+
+      // 生成当前项目的消费记录数据
+      generateProjectQuotaConsumptionData();
+
+      // 重置到第一页
+      currentProjectQuotaPage = 1;
+
+      // 渲染表格
+      filterProjectQuotaConsumption();
+
+      // 显示模态框
+      modal.classList.remove('hidden');
+    }
+    
+    window.openProjectQuotaConsumptionModal = openProjectQuotaConsumptionModal;
+
+    function closeProjectQuotaConsumptionModal() {
+      const modal = document.getElementById('project-quota-consumption-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+    }
+    
+    window.closeProjectQuotaConsumptionModal = closeProjectQuotaConsumptionModal;
+
+    function generateProjectQuotaConsumptionData() {
+      projectQuotaConsumptionData = [];
+      if (!currentProject) return;
+
+      // 资源类型映射
+      const typeMap = {
+        'storage': '存储空间',
+        'aiTokens': 'AI 使用量',
+        'liveStream': '视频直播',
+        'baseLicense': '基础版账号',
+        'premiumLicense': '旗舰版账号'
+      };
+
+      // 生成最近30天的消费记录（只针对当前项目）
+      const types = Object.keys(typeMap);
+      
+      types.forEach(type => {
+        // 每天生成1-3条记录
+        for (let i = 0; i < 30; i++) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const recordCount = Math.floor(Math.random() * 3) + 1;
+          
+          for (let j = 0; j < recordCount; j++) {
+            const consumption = Math.floor(Math.random() * 100) + 1;
+            projectQuotaConsumptionData.push({
+              date: date.toISOString().split('T')[0],
+              time: `${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
+              type: typeMap[type],
+              consumption: consumption,
+              operation: Math.random() > 0.5 ? '消费' : '分配'
+            });
+          }
+        }
+      });
+
+      // 按日期和时间倒序排序
+      projectQuotaConsumptionData.sort((a, b) => {
+        if (a.date !== b.date) {
+          return b.date.localeCompare(a.date);
+        }
+        return b.time.localeCompare(a.time);
+      });
+    }
+
+    function filterProjectQuotaConsumption() {
+      const typeFilterValue = document.getElementById('project-quota-filter-type').value;
+      const startDate = document.getElementById('project-quota-filter-start').value;
+      const endDate = document.getElementById('project-quota-filter-end').value;
+
+      // 类型映射
+      const typeMap = {
+        'storage': '存储空间',
+        'aiTokens': 'AI 使用量',
+        'liveStream': '视频直播',
+        'baseLicense': '基础版账号',
+        'premiumLicense': '旗舰版账号'
+      };
+      const typeFilterLabel = typeFilterValue ? typeMap[typeFilterValue] : null;
+
+      filteredProjectQuotaData = projectQuotaConsumptionData.filter(record => {
+        const matchType = !typeFilterLabel || record.type === typeFilterLabel;
+        const matchStart = !startDate || record.date >= startDate;
+        const matchEnd = !endDate || record.date <= endDate;
+
+        return matchType && matchStart && matchEnd;
+      });
+
+      // 重置到第一页
+      currentProjectQuotaPage = 1;
+
+      // 渲染页面
+      renderProjectQuotaConsumptionPage();
+    }
+    
+    window.filterProjectQuotaConsumption = filterProjectQuotaConsumption;
+
+    function renderProjectQuotaConsumptionPage() {
+      const tbody = document.getElementById('project-quota-consumption-body');
+      if (!tbody) return;
+      
+      tbody.innerHTML = '';
+
+      if (filteredProjectQuotaData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500 text-sm">暂无消费记录</td></tr>';
+        updateProjectQuotaPaginationInfo(0);
+        return;
+      }
+
+      // 计算分页
+      const totalPages = Math.ceil(filteredProjectQuotaData.length / projectQuotaPageSize);
+      const startIndex = (currentProjectQuotaPage - 1) * projectQuotaPageSize;
+      const endIndex = Math.min(startIndex + projectQuotaPageSize, filteredProjectQuotaData.length);
+      const pageData = filteredProjectQuotaData.slice(startIndex, endIndex);
+
+      pageData.forEach(record => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50';
+        tr.innerHTML = `
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${record.date} ${record.time}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${record.type}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">${record.consumption.toLocaleString()}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm">
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium ${record.operation === '消费' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+              ${record.operation}
+            </span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // 更新分页信息
+      updateProjectQuotaPaginationInfo(filteredProjectQuotaData.length, startIndex + 1, endIndex, totalPages);
+    }
+
+    function updateProjectQuotaPaginationInfo(total, start = 0, end = 0, totalPages = 0) {
+      const infoEl = document.getElementById('project-quota-pagination-info');
+      if (infoEl) {
+        infoEl.innerHTML = `显示 <span class="font-medium">${start}</span> 到 <span class="font-medium">${end}</span> 条，共 <span class="font-medium">${total}</span> 条`;
+      }
+
+      const currentPageEl = document.getElementById('project-quota-current-page');
+      const totalPagesEl = document.getElementById('project-quota-total-pages');
+      if (currentPageEl) currentPageEl.textContent = currentProjectQuotaPage;
+      if (totalPagesEl) totalPagesEl.textContent = totalPages;
+
+      // 更新按钮状态
+      const prevBtn = document.getElementById('project-quota-prev-btn');
+      const nextBtn = document.getElementById('project-quota-next-btn');
+      const prevBtnMobile = document.getElementById('project-quota-prev-btn-mobile');
+      const nextBtnMobile = document.getElementById('project-quota-next-btn-mobile');
+
+      const canPrev = currentProjectQuotaPage > 1;
+      const canNext = currentProjectQuotaPage < totalPages;
+
+      if (prevBtn) {
+        prevBtn.disabled = !canPrev;
+        prevBtn.classList.toggle('opacity-50', !canPrev);
+        prevBtn.classList.toggle('cursor-not-allowed', !canPrev);
+      }
+      if (nextBtn) {
+        nextBtn.disabled = !canNext;
+        nextBtn.classList.toggle('opacity-50', !canNext);
+        nextBtn.classList.toggle('cursor-not-allowed', !canNext);
+      }
+      if (prevBtnMobile) {
+        prevBtnMobile.disabled = !canPrev;
+        prevBtnMobile.classList.toggle('opacity-50', !canPrev);
+        prevBtnMobile.classList.toggle('cursor-not-allowed', !canPrev);
+      }
+      if (nextBtnMobile) {
+        nextBtnMobile.disabled = !canNext;
+        nextBtnMobile.classList.toggle('opacity-50', !canNext);
+        nextBtnMobile.classList.toggle('cursor-not-allowed', !canNext);
+      }
+    }
+
+    function changeProjectQuotaPage(page) {
+      const totalPages = Math.ceil(filteredProjectQuotaData.length / projectQuotaPageSize);
+      if (page < 1 || page > totalPages) return;
+      currentProjectQuotaPage = page;
+      renderProjectQuotaConsumptionPage();
+    }
+    
+    window.changeProjectQuotaPage = changeProjectQuotaPage;
+  </script>
+</body>
+</html>
+

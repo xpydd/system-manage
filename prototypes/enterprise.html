@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>企业管理 - 企业后台管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="data.js"></script>
+  <script src="layout.js"></script>
+  <style>
+    /* 自定义滚动条样式 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1; 
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #ccc; 
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #999; 
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans antialiased h-screen flex overflow-hidden" id="app">
+
+  <!-- 侧边栏和Header通过 layout.js 动态渲染 -->
+
+  <!-- 主内容区域容器 -->
+  <div class="flex-1 flex flex-col min-w-0 bg-gray-50" id="main-content">
+    
+    <!-- 主视图 -->
+    <main class="flex-1 overflow-auto p-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+        
+        <!-- 左侧：企业树形列表 -->
+        <div class="lg:col-span-3 flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <h3 class="font-semibold text-gray-700">企业列表</h3>
+            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium" onclick="openAddEnterpriseModal()">+ 新增</button>
+          </div>
+          <div class="flex-1 overflow-y-auto p-2" id="enterprise-tree">
+            <!-- 企业列表将通过JS渲染在这里 -->
+          </div>
+        </div>
+
+        <!-- 右侧：企业详情与统计 -->
+        <div class="lg:col-span-9 flex flex-col gap-6 overflow-y-auto">
+          
+          <!-- 企业基本信息卡片 -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex justify-between items-start mb-6">
+              <div>
+                <h2 class="text-2xl font-bold text-gray-900" id="detail-name">选择企业</h2>
+              </div>
+              <div class="flex space-x-2">
+                <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm">编辑信息</button>
+                <button class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm">更多操作</button>
+              </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="border-b border-gray-200 mb-6">
+              <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                  概览
+                </button>
+                <button onclick="switchTab('projects')" id="tab-projects" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                  项目列表
+                </button>
+                <button onclick="switchTab('devices')" id="tab-devices" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                  设备列表
+                </button>
+                <button onclick="switchTab('members')" id="tab-members" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                  成员列表
+                </button>
+              </nav>
+            </div>
+
+            <!-- 概览内容 -->
+            <div id="content-overview" class="tab-content">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                  <p class="text-sm text-gray-500 mb-1">管理员</p>
+                  <p class="font-medium text-gray-900" id="detail-contact">-</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                  <p class="text-sm text-gray-500 mb-1">注册时间</p>
+                  <p class="font-medium text-gray-900" id="detail-date">-</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100 cursor-pointer hover:bg-gray-100 transition-colors" onclick="switchTab('projects')">
+                  <p class="text-sm text-gray-500 mb-1">项目总数</p>
+                  <p class="font-medium text-gray-900" id="detail-projects-count">0</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                  <p class="text-sm text-gray-500 mb-1">可用额度</p>
+                  <a href="javascript:void(0)" onclick="openQuotaConsumptionModal()" class="font-medium text-green-600 hover:text-green-700 hover:underline" id="detail-quota">查看详情</a>
+                </div>
+              </div>
+
+              <!-- 资源配额使用情况 -->
+              <h3 class="font-semibold text-gray-800 mb-4 mt-6">资源配额使用情况</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="resource-grid">
+                <!-- JS 动态生成卡片 -->
+              </div>
+
+              <!-- 统计图表区域 (移入概览 Tab) -->
+              <div class="mt-8 bg-white rounded-xl border border-gray-200 p-6">
+                <h3 class="font-semibold text-gray-800 mb-4">资源使用趋势 (近6个月)</h3>
+                <div class="h-64">
+                  <canvas id="resourceChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- 项目列表内容 -->
+            <div id="content-projects" class="tab-content hidden">
+              <div class="mb-4 flex justify-between items-center">
+                <button onclick="openCreateProjectModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm text-sm font-medium">
+                  + 新建项目
+                </button>
+              </div>
+              
+              <!-- 筛选框 -->
+              <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">项目名称</label>
+                    <input type="text" id="project-filter-name" placeholder="搜索项目名称" oninput="filterProjectList()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">项目版本</label>
+                    <select id="project-filter-version" onchange="filterProjectList()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                      <option value="">全部版本</option>
+                      <option value="基础版">基础版</option>
+                      <option value="旗舰版">旗舰版</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">项目负责人</label>
+                    <input type="text" id="project-filter-admin" placeholder="搜索项目负责人" oninput="filterProjectList()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">负责人电话</label>
+                    <input type="text" id="project-filter-phone" placeholder="搜索电话" oninput="filterProjectList()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">项目名称</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">项目版本</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">项目负责人</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">负责人电话</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">存储使用</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">AI 使用</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-200" id="project-list-body">
+                    <!-- 项目列表 -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 设备列表内容 -->
+            <div id="content-devices" class="tab-content hidden">
+              <!-- 筛选框 -->
+              <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">设备名称</label>
+                    <input type="text" id="device-filter-name" placeholder="搜索设备名称" oninput="filterDeviceList()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">设备类型</label>
+                    <select id="device-filter-type" onchange="filterDeviceList()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                      <option value="">全部类型</option>
+                      <option value="摄像头">摄像头</option>
+                      <option value="传感器">传感器</option>
+                      <option value="网关">网关</option>
+                      <option value="其他">其他</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">所属项目</label>
+                    <input type="text" id="device-filter-project" placeholder="搜索项目" oninput="filterDeviceList()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">设备状态</label>
+                    <select id="device-filter-status" onchange="filterDeviceList()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                      <option value="">全部状态</option>
+                      <option value="online">在线</option>
+                      <option value="offline">离线</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">设备名称</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">类型</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">所属项目</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">位置</th>
+                      <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">状态</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-200" id="device-list-body">
+                    <!-- 设备列表 -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 成员列表内容 -->
+            <div id="content-members" class="tab-content hidden">
+              <div class="mb-4 flex justify-between items-center">
+                <button onclick="openAddMemberModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm text-sm font-medium">
+                  + 新增成员
+                </button>
+              </div>
+              
+              <!-- 筛选框 -->
+              <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">手机号</label>
+                    <input type="text" id="member-filter-phone" placeholder="搜索手机号" oninput="filterMemberList()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">姓名</label>
+                    <input type="text" id="member-filter-name" placeholder="搜索姓名" oninput="filterMemberList()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">角色</label>
+                    <input type="text" id="member-filter-role" placeholder="搜索角色" oninput="filterMemberList()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+                </div>
+              </div>
+
+              <div class="overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">手机号</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">姓名</th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">角色</th>
+                      <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-200" id="member-list-body">
+                    <!-- 成员列表 -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+          
+          <!-- 旧的统计图表区域 (已移入 Tabs) -->
+        </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Enterprise Modal -->
+  <div id="add-enterprise-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeAddEnterpriseModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">新增企业</h3>
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">企业名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="new-ent-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            
+            <!-- 套餐额度配置 -->
+            <div class="bg-blue-50 p-3 rounded-md border border-blue-200">
+               <p class="text-xs text-blue-700 mb-2 font-medium">初始资源配额配置</p>
+               
+               <!-- 版本资源 (输入) -->
+               <div class="mb-4 pb-4 border-b border-blue-200">
+                 <p class="text-xs text-blue-600 mb-2 font-medium">版本账号数量</p>
+                 <div class="grid grid-cols-2 gap-4">
+                   <div>
+                     <label class="block text-sm font-medium text-gray-700">基础版账号 <span class="text-red-500">*</span></label>
+                     <input type="number" id="new-quota-base" value="20" min="0" required oninput="calculateResources()" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                     <p class="text-xs text-gray-500 mt-1">含: 10G存储, 1万AI</p>
+                   </div>
+                   <div>
+                     <label class="block text-sm font-medium text-gray-700">旗舰版账号 <span class="text-red-500">*</span></label>
+                     <input type="number" id="new-quota-premium" value="5" min="0" required oninput="calculateResources()" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                     <p class="text-xs text-gray-500 mt-1">含: 100G存储, 10万AI, 100分直播</p>
+                   </div>
+                 </div>
+               </div>
+
+               <!-- 基础资源 (自动计算) -->
+               <div>
+                 <p class="text-xs text-blue-600 mb-2 font-medium">基础资源 (自动叠加)</p>
+                 <div class="grid grid-cols-3 gap-4 text-center">
+                   <div class="bg-white p-2 rounded border border-blue-100">
+                     <p class="text-xs text-gray-500">存储空间</p>
+                     <p class="font-bold text-blue-700" id="calc-storage">0 GB</p>
+                   </div>
+                   <div class="bg-white p-2 rounded border border-blue-100">
+                     <p class="text-xs text-gray-500">AI Tokens</p>
+                     <p class="font-bold text-blue-700" id="calc-ai">0</p>
+                   </div>
+                   <div class="bg-white p-2 rounded border border-blue-100">
+                     <p class="text-xs text-gray-500">直播时长</p>
+                     <p class="font-bold text-blue-700" id="calc-live">0 分钟</p>
+                   </div>
+                 </div>
+               </div>
+            </div>
+
+            <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
+               <p class="text-xs text-gray-500 mb-2 font-medium">企业管理员信息</p>
+               <div class="grid grid-cols-2 gap-4">
+                 <div>
+                   <label class="block text-sm font-medium text-gray-700">姓名 <span class="text-red-500">*</span></label>
+                   <input type="text" id="new-ent-admin-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                 </div>
+                 <div>
+                   <label class="block text-sm font-medium text-gray-700">手机号 <span class="text-red-500">*</span></label>
+                   <input type="text" id="new-ent-admin-phone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                 </div>
+               </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" onclick="saveNewEnterprise()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+            保存
+          </button>
+          <button type="button" onclick="closeAddEnterpriseModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quota Consumption Detail Modal -->
+  <div id="quota-consumption-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="quota-modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeQuotaConsumptionModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="quota-modal-title">额度消费记录</h3>
+          
+          <!-- 筛选框 -->
+          <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">资源类型</label>
+                <select id="quota-filter-type" onchange="filterQuotaConsumption()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  <option value="">全部类型</option>
+                  <option value="storage">存储空间</option>
+                  <option value="aiTokens">AI 使用量</option>
+                  <option value="liveStream">视频直播</option>
+                  <option value="baseLicense">基础版账号</option>
+                  <option value="premiumLicense">旗舰版账号</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">项目名称</label>
+                <input type="text" id="quota-filter-project" placeholder="搜索项目" oninput="filterQuotaConsumption()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">开始日期</label>
+                <input type="date" id="quota-filter-start" onchange="filterQuotaConsumption()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">结束日期</label>
+                <input type="date" id="quota-filter-end" onchange="filterQuotaConsumption()" class="block w-full border border-gray-300 rounded-md shadow-sm py-1.5 px-3 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- 表格 -->
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">时间</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">资源类型</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">项目名称</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">消费量</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作类型</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200" id="quota-consumption-body">
+                <!-- JS 渲染 -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 分页控件 -->
+          <div class="bg-white px-4 py-3 border-t border-gray-200 flex items-center justify-between sm:px-6 mt-4">
+            <div class="flex-1 flex justify-between sm:hidden">
+              <button onclick="changeQuotaPage(currentQuotaPage - 1)" id="quota-prev-btn-mobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                上一页
+              </button>
+              <button onclick="changeQuotaPage(currentQuotaPage + 1)" id="quota-next-btn-mobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                下一页
+              </button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p class="text-sm text-gray-700">
+                  显示 <span class="font-medium" id="quota-page-start">1</span> 到 <span class="font-medium" id="quota-page-end">10</span> 条，共 <span class="font-medium" id="quota-total-count">0</span> 条
+                </p>
+              </div>
+              <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button onclick="changeQuotaPage(currentQuotaPage - 1)" id="quota-prev-btn" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">上一页</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <div id="quota-page-numbers" class="flex">
+                    <!-- 页码按钮将通过JS动态生成 -->
+                  </div>
+                  <button onclick="changeQuotaPage(currentQuotaPage + 1)" id="quota-next-btn" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">下一页</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" onclick="closeQuotaConsumptionModal()" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:ml-3 sm:w-auto sm:text-sm">
+            关闭
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Member Modal -->
+  <div id="member-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="member-modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeMemberModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <h3 class="text-lg leading-6 font-medium text-gray-900" id="member-modal-title">新增成员</h3>
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">手机号 <span class="text-red-500">*</span></label>
+              <input type="text" id="member-phone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="11位手机号">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">姓名 <span class="text-red-500">*</span></label>
+              <input type="text" id="member-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="请输入姓名">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">角色 <span class="text-red-500">*</span></label>
+              <select id="member-role" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="">请选择角色</option>
+                <option value="企业管理员">企业管理员</option>
+                <option value="普通用户">普通用户</option>
+                <option value="财务">财务</option>
+                <option value="运营">运营</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" onclick="saveMember()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+            保存
+          </button>
+          <button type="button" onclick="closeMemberModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Project Modal (shared with project.html) -->
+  <div id="create-project-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeCreateProjectModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <h3 class="text-lg leading-6 font-medium text-gray-900" id="create-project-modal-title">新建项目</h3>
+          <div class="mt-4 space-y-4">
+            <div>
+              <label for="new-project-name" class="block text-sm font-medium text-gray-700">项目名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="new-project-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="请输入项目名称">
+            </div>
+            <div>
+              <label for="new-project-enterprise" class="block text-sm font-medium text-gray-700">所属企业 <span class="text-red-500">*</span></label>
+              <select id="new-project-enterprise" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <!-- JS填充 -->
+              </select>
+            </div>
+            <div>
+              <label for="new-project-version" class="block text-sm font-medium text-gray-700">项目版本 <span class="text-red-500">*</span></label>
+              <select id="new-project-version" required onchange="updateQuotaPreview()" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="base">基础版</option>
+                <option value="premium">旗舰版</option>
+              </select>
+              <p class="mt-1 text-xs text-gray-500" id="quota-preview">含: 1000GB存储, 10万AI Tokens</p>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
+              <p class="text-xs text-gray-500 mb-2 font-medium">项目负责人信息 (自动创建账号并赋权)</p>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="new-admin-name" class="block text-sm font-medium text-gray-700">姓名 <span class="text-red-500">*</span></label>
+                  <input type="text" id="new-admin-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="负责人姓名">
+                </div>
+                <div>
+                  <label for="new-admin-phone" class="block text-sm font-medium text-gray-700">手机号 <span class="text-red-500">*</span></label>
+                  <input type="text" id="new-admin-phone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="11位手机号">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" onclick="saveNewProjectFromEnterprise()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+            创建项目
+          </button>
+          <button type="button" onclick="closeCreateProjectModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const RESOURCE_RULES = {
+      base: { storage: 10, ai: 10000, live: 0 }, // GB, Tokens, Mins
+      premium: { storage: 100, ai: 100000, live: 100 }
+    };
+
+    function openAddEnterpriseModal() {
+      document.getElementById('add-enterprise-modal').classList.remove('hidden');
+      calculateResources(); // 初始化计算
+    }
+
+    function closeAddEnterpriseModal() {
+      document.getElementById('add-enterprise-modal').classList.add('hidden');
+    }
+
+    function calculateResources() {
+      const baseCount = parseInt(document.getElementById('new-quota-base').value) || 0;
+      const premiumCount = parseInt(document.getElementById('new-quota-premium').value) || 0;
+
+      const totalStorage = (baseCount * RESOURCE_RULES.base.storage) + (premiumCount * RESOURCE_RULES.premium.storage);
+      const totalAi = (baseCount * RESOURCE_RULES.base.ai) + (premiumCount * RESOURCE_RULES.premium.ai);
+      const totalLive = (baseCount * RESOURCE_RULES.base.live) + (premiumCount * RESOURCE_RULES.premium.live);
+
+      document.getElementById('calc-storage').textContent = `${totalStorage} GB`;
+      document.getElementById('calc-ai').textContent = totalAi.toLocaleString();
+      document.getElementById('calc-live').textContent = `${totalLive} 分钟`;
+
+      return { totalStorage, totalAi, totalLive };
+    }
+
+    function saveNewEnterprise() {
+       const name = document.getElementById('new-ent-name').value;
+       // desc removed
+       const adminName = document.getElementById('new-ent-admin-name').value;
+       const adminPhone = document.getElementById('new-ent-admin-phone').value;
+
+       // Quota values from inputs
+       const qBaseValue = document.getElementById('new-quota-base').value;
+       const qPremiumValue = document.getElementById('new-quota-premium').value;
+       const qBase = parseInt(qBaseValue);
+       const qPremium = parseInt(qPremiumValue);
+       
+       // Calculate derived resources
+       const { totalStorage, totalAi, totalLive } = calculateResources();
+
+       if (!name || !adminName || !adminPhone) {
+         alert('请填写完整信息');
+         return;
+       }
+       
+       if (qBaseValue === '' || isNaN(qBase) || qBase < 0) {
+         alert('请输入有效的基础版账号数量');
+         return;
+       }
+       
+       if (qPremiumValue === '' || isNaN(qPremium) || qPremium < 0) {
+         alert('请输入有效的旗舰版账号数量');
+         return;
+       }
+       
+       if (!/^1[3-9]\d{9}$/.test(adminPhone)) {
+         alert('请输入有效的手机号');
+         return;
+       }
+
+       const newEnt = {
+         id: Date.now(),
+         name: name,
+         description: "新创建企业", // Default description
+         contactInfo: `联系人：${adminName}，电话：${adminPhone}`,
+         createdAt: new Date().toISOString().split('T')[0],
+         projects: [],
+         quota: {
+            storage: { total: totalStorage, used: 0, unit: "GB" },
+            baseLicense: { total: qBase, used: 0 },
+            premiumLicense: { total: qPremium, used: 0 },
+            aiTokens: { total: totalAi, used: 0 },
+            liveStream: { total: totalLive, used: 0, unit: "分钟" }
+         }
+       };
+
+       mockData.enterprises.push(newEnt);
+       
+       // Add Admin User
+       if (mockData.users) {
+          mockData.users.push({
+             id: Date.now() + 1,
+             username: adminPhone,
+             fullName: adminName,
+             phone: adminPhone,
+             role: "企业管理员",
+             enterprise: name,
+             project: "-",
+             status: "激活",
+             createdAt: new Date().toISOString().split('T')[0]
+          });
+       }
+
+       renderEnterpriseTree();
+       selectEnterprise(newEnt.id);
+       closeAddEnterpriseModal();
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      // 渲染布局
+      renderLayout('企业管理');
+
+      renderEnterpriseTree();
+      // 默认选中第一个
+      if (mockData.enterprises.length > 0) {
+        selectEnterprise(mockData.enterprises[0].id);
+      }
+    });
+
+    let currentEnterpriseId = null;
+    let chartInstance = null;
+    let currentEnterpriseProjects = []; // 存储当前企业的所有项目，用于筛选
+    let currentEnterpriseDevices = []; // 存储当前企业的所有设备，用于筛选
+    let currentEnterpriseMembers = []; // 存储当前企业的所有成员，用于筛选
+    let filteredMemberList = []; // 存储当前显示的成员列表（用于编辑/删除时通过索引查找）
+    let editingMemberIndex = -1; // 当前编辑的成员索引，-1表示新增
+
+    function renderEnterpriseTree() {
+      const treeContainer = document.getElementById('enterprise-tree');
+      treeContainer.innerHTML = '';
+
+      mockData.enterprises.forEach(ent => {
+        const item = document.createElement('div');
+        item.className = `group cursor-pointer p-3 rounded-lg mb-1 transition-colors hover:bg-gray-50 ${currentEnterpriseId === ent.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`;
+        item.onclick = () => selectEnterprise(ent.id);
+        
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0">
+                <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm">
+                  ${ent.name.substring(0, 1)}
+                </span>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-900 truncate" style="max-width: 140px;">${ent.name}</p>
+                <p class="text-xs text-gray-500">${ent.projects.length} 个项目</p>
+              </div>
+            </div>
+            <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </div>
+        `;
+        treeContainer.appendChild(item);
+      });
+    }
+
+    function selectEnterprise(id) {
+      currentEnterpriseId = id;
+      const ent = mockData.enterprises.find(e => e.id === id);
+      if (!ent) return;
+
+      // 更新树的高亮状态
+      renderEnterpriseTree();
+
+      // 更新详情 (概览 Tab)
+      document.getElementById('detail-name').textContent = ent.name;
+      // document.getElementById('detail-desc').textContent = ent.description; // Removed
+      const contactText = ent.contactInfo ? ent.contactInfo.split('，')[0].replace('联系人：', '') : '-';
+      document.getElementById('detail-contact').textContent = contactText;
+      document.getElementById('detail-date').textContent = ent.createdAt || '-';
+      document.getElementById('detail-projects-count').textContent = ent.projects.length;
+      // detail-quota is now a link, so we keep the "查看详情" text which is already in HTML 
+
+      // 渲染资源卡片
+      renderResourceGrid(ent.quota || {});
+
+      // 更新图表 (概览 Tab)
+      updateChart(ent);
+
+      // 保存当前企业的所有项目
+      currentEnterpriseProjects = ent.projects || [];
+      // 渲染项目列表
+      renderProjectList(currentEnterpriseProjects);
+
+      // 收集所有设备数据
+      currentEnterpriseDevices = [];
+      ent.projects.forEach(proj => {
+        if(proj.devices && proj.devices.length > 0) {
+          proj.devices.forEach(dev => {
+            currentEnterpriseDevices.push({
+              ...dev,
+              projectName: proj.name
+            });
+          });
+        }
+      });
+      renderDeviceList(currentEnterpriseDevices);
+
+      // 收集企业成员数据（只显示企业直属用户，不包括项目团队成员）
+      currentEnterpriseMembers = [];
+      
+      // 企业成员 (从 mockData.users 筛选)
+      if (typeof mockData.users !== 'undefined') {
+        const entUsers = mockData.users.filter(u => u.enterprise === ent.name);
+        entUsers.forEach(u => {
+          currentEnterpriseMembers.push({
+            phone: u.phone,
+            name: u.fullName,
+            role: u.role,
+            org: '企业直属',
+            memberType: '企业成员'
+          });
+        });
+      }
+
+      renderMemberList(currentEnterpriseMembers);
+    }
+
+    function renderDeviceList(devices) {
+      const deviceBody = document.getElementById('device-list-body');
+      deviceBody.innerHTML = '';
+
+      if (devices.length === 0) {
+        deviceBody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500 text-sm">暂无设备</td></tr>';
+        return;
+      }
+
+      devices.forEach(dev => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50';
+        tr.innerHTML = `
+          <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${dev.name}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${dev.type}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${dev.projectName}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${dev.location}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-right">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${dev.status === 'online' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              ${dev.status === 'online' ? '在线' : '离线'}
+            </span>
+          </td>
+        `;
+        deviceBody.appendChild(tr);
+      });
+    }
+
+    function filterDeviceList() {
+      if (!currentEnterpriseDevices || currentEnterpriseDevices.length === 0) {
+        renderDeviceList([]);
+        return;
+      }
+
+      const nameFilter = document.getElementById('device-filter-name').value.toLowerCase();
+      const typeFilter = document.getElementById('device-filter-type').value;
+      const projectFilter = document.getElementById('device-filter-project').value.toLowerCase();
+      const statusFilter = document.getElementById('device-filter-status').value;
+
+      const filtered = currentEnterpriseDevices.filter(dev => {
+        const matchName = !nameFilter || dev.name.toLowerCase().includes(nameFilter);
+        const matchType = !typeFilter || dev.type === typeFilter;
+        const matchProject = !projectFilter || dev.projectName.toLowerCase().includes(projectFilter);
+        const matchStatus = !statusFilter || dev.status === statusFilter;
+
+        return matchName && matchType && matchProject && matchStatus;
+      });
+
+      renderDeviceList(filtered);
+    }
+
+    function renderMemberList(members) {
+      const memberBody = document.getElementById('member-list-body');
+      memberBody.innerHTML = '';
+      
+      // 保存当前显示的成员列表，用于编辑/删除时通过索引查找
+      filteredMemberList = members;
+
+      if (members.length === 0) {
+        memberBody.innerHTML = '<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500 text-sm">暂无成员信息</td></tr>';
+        return;
+      }
+
+      // 只显示企业成员
+      members.forEach((member, index) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50';
+        tr.innerHTML = `
+          <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${member.phone || '-'}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${member.name}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${member.role}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+            <button onclick="openEditMemberModal(${index})" class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+            <button onclick="deleteMember(${index})" class="text-red-600 hover:text-red-900">删除</button>
+          </td>
+        `;
+        memberBody.appendChild(tr);
+      });
+    }
+
+    function filterMemberList() {
+      if (!currentEnterpriseMembers || currentEnterpriseMembers.length === 0) {
+        renderMemberList([]);
+        return;
+      }
+
+      const phoneFilter = document.getElementById('member-filter-phone').value;
+      const nameFilter = document.getElementById('member-filter-name').value.toLowerCase();
+      const roleFilter = document.getElementById('member-filter-role').value.toLowerCase();
+
+      const filtered = currentEnterpriseMembers.filter(member => {
+        const matchPhone = !phoneFilter || (member.phone && member.phone.includes(phoneFilter));
+        const matchName = !nameFilter || member.name.toLowerCase().includes(nameFilter);
+        const matchRole = !roleFilter || member.role.toLowerCase().includes(roleFilter);
+
+        return matchPhone && matchName && matchRole;
+      });
+
+      renderMemberList(filtered);
+    }
+
+    // 成员管理相关函数
+    function openAddMemberModal() {
+      editingMemberIndex = -1;
+      document.getElementById('member-modal-title').textContent = '新增成员';
+      document.getElementById('member-phone').value = '';
+      document.getElementById('member-name').value = '';
+      document.getElementById('member-role').value = '';
+      document.getElementById('member-phone').disabled = false;
+      document.getElementById('member-modal').classList.remove('hidden');
+    }
+
+    function openEditMemberModal(index) {
+      if (index < 0 || index >= filteredMemberList.length) return;
+      
+      editingMemberIndex = index;
+      const member = filteredMemberList[index];
+      
+      document.getElementById('member-modal-title').textContent = '编辑成员';
+      document.getElementById('member-phone').value = member.phone || '';
+      document.getElementById('member-name').value = member.name || '';
+      document.getElementById('member-role').value = member.role || '';
+      document.getElementById('member-phone').disabled = true; // 编辑时不允许修改手机号
+      document.getElementById('member-modal').classList.remove('hidden');
+    }
+
+    function closeMemberModal() {
+      document.getElementById('member-modal').classList.add('hidden');
+      editingMemberIndex = -1;
+    }
+
+    function saveMember() {
+      const phone = document.getElementById('member-phone').value.trim();
+      const name = document.getElementById('member-name').value.trim();
+      const role = document.getElementById('member-role').value;
+
+      if (!phone || !name || !role) {
+        alert('请填写完整信息');
+        return;
+      }
+
+      if (!/^1[3-9]\d{9}$/.test(phone)) {
+        alert('请输入正确的11位手机号');
+        return;
+      }
+
+      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      if (!ent) return;
+
+      if (editingMemberIndex === -1) {
+        // 新增成员
+        // 检查手机号是否已存在
+        const existingUser = mockData.users.find(u => u.phone === phone || u.username === phone);
+        if (existingUser) {
+          alert('该手机号已存在，请使用其他手机号');
+          return;
+        }
+
+        // 创建新用户
+        const newUser = {
+          id: Date.now(),
+          username: phone,
+          fullName: name,
+          phone: phone,
+          role: role,
+          enterprise: ent.name,
+          project: '-',
+          status: '激活',
+          createdAt: new Date().toISOString().split('T')[0]
+        };
+
+        if (!mockData.users) {
+          mockData.users = [];
+        }
+        mockData.users.push(newUser);
+
+        // 添加到当前企业成员列表
+        currentEnterpriseMembers.push({
+          phone: phone,
+          name: name,
+          role: role,
+          org: '企业直属',
+          memberType: '企业成员'
+        });
+
+        alert('成员添加成功！');
+      } else {
+        // 编辑成员
+        const member = filteredMemberList[editingMemberIndex];
+        
+        // 更新mockData.users中的用户信息
+        const user = mockData.users.find(u => u.phone === member.phone || u.username === member.phone);
+        if (user) {
+          user.fullName = name;
+          user.role = role;
+        }
+
+        // 更新currentEnterpriseMembers中的成员信息
+        const memberIndex = currentEnterpriseMembers.findIndex(m => m.phone === member.phone);
+        if (memberIndex !== -1) {
+          currentEnterpriseMembers[memberIndex].name = name;
+          currentEnterpriseMembers[memberIndex].role = role;
+        }
+
+        alert('成员信息更新成功！');
+      }
+
+      closeMemberModal();
+      // 重新渲染列表（应用当前筛选条件）
+      filterMemberList();
+    }
+
+    function deleteMember(index) {
+      if (index < 0 || index >= filteredMemberList.length) return;
+
+      const member = filteredMemberList[index];
+      
+      if (!confirm(`确定要删除成员 "${member.name}" (${member.phone}) 吗？`)) {
+        return;
+      }
+
+      // 从mockData.users中删除
+      if (mockData.users) {
+        const userIndex = mockData.users.findIndex(u => u.phone === member.phone || u.username === member.phone);
+        if (userIndex !== -1) {
+          mockData.users.splice(userIndex, 1);
+        }
+      }
+
+      // 从currentEnterpriseMembers中删除
+      const memberIndex = currentEnterpriseMembers.findIndex(m => m.phone === member.phone);
+      if (memberIndex !== -1) {
+        currentEnterpriseMembers.splice(memberIndex, 1);
+      }
+
+      alert('成员删除成功！');
+      // 重新渲染列表（应用当前筛选条件）
+      filterMemberList();
+    }
+
+    // 新建项目相关函数（与project.html共享逻辑）
+    function openCreateProjectModal() {
+      // 填充企业下拉框，默认选择当前企业
+      const entSelect = document.getElementById('new-project-enterprise');
+      entSelect.innerHTML = '';
+      mockData.enterprises.forEach(ent => {
+        const option = document.createElement('option');
+        option.value = ent.id;
+        option.textContent = ent.name;
+        if (currentEnterpriseId && ent.id === currentEnterpriseId) {
+          option.selected = true;
+        }
+        entSelect.appendChild(option);
+      });
+      
+      // 重置表单
+      document.getElementById('new-project-name').value = '';
+      document.getElementById('new-project-version').value = 'base';
+      document.getElementById('new-admin-name').value = '';
+      document.getElementById('new-admin-phone').value = '';
+      updateQuotaPreview();
+      
+      document.getElementById('create-project-modal').classList.remove('hidden');
+    }
+
+    function closeCreateProjectModal() {
+      document.getElementById('create-project-modal').classList.add('hidden');
+    }
+
+    function updateQuotaPreview() {
+      const version = document.getElementById('new-project-version').value;
+      const preview = document.getElementById('quota-preview');
+      if (version === 'base') {
+        preview.textContent = '含: 1000GB存储, 10万AI Tokens';
+      } else {
+        preview.textContent = '含: 5000GB存储, 50万AI Tokens';
+      }
+    }
+
+    function saveNewProjectFromEnterprise() {
+      const name = document.getElementById('new-project-name').value;
+      const entId = parseInt(document.getElementById('new-project-enterprise').value);
+      const version = document.getElementById('new-project-version').value;
+      const adminName = document.getElementById('new-admin-name').value;
+      const adminPhone = document.getElementById('new-admin-phone').value;
+      
+      // Auto-assign quota based on version
+      let storage, ai;
+      let verName = "基础版";
+      if (version === 'base') {
+        storage = 1000;
+        ai = 100000;
+        verName = "基础版";
+      } else {
+        storage = 5000;
+        ai = 500000;
+        verName = "旗舰版";
+      }
+
+      if (!name || !adminName || !adminPhone || !version) {
+        alert("请填写完整的项目信息和负责人信息");
+        return;
+      }
+      
+      if (version !== 'base' && version !== 'premium') {
+        alert("请选择有效的项目版本");
+        return;
+      }
+      
+      if (!/^1[3-9]\d{9}$/.test(adminPhone)) {
+        alert("请输入正确的11位手机号");
+        return;
+      }
+
+      // 1. 创建项目对象
+      const newProject = {
+        id: Date.now(),
+        name: name,
+        version: verName,
+        description: "新创建的项目",
+        projectAdmin: adminName,
+        allocatedQuota: storage * 2 + ai,
+        storageUsed: 0,
+        aiUsed: 0,
+        status: "进行中",
+        createdAt: new Date().toISOString().split('T')[0],
+        quota: {
+           storage: { total: storage, used: 0, unit: "GB" },
+           aiTokens: { total: ai, used: 0 },
+           baseLicense: { total: 10, used: 0 },
+           premiumLicense: { total: 2, used: 0 },
+           liveStream: { total: 100, used: 0, unit: "分钟" }
+        },
+        devices: [],
+        teamMembers: [
+          {
+            id: Date.now() + 1,
+            name: adminName,
+            role: "项目管理员",
+            phone: adminPhone
+          }
+        ],
+        subcontractors: []
+      };
+
+      // 2. 将项目添加到对应企业
+      const enterprise = mockData.enterprises.find(e => e.id === entId);
+      if (enterprise) {
+        enterprise.projects.push(newProject);
+      }
+
+      // 3. 处理用户逻辑 (检查是否已存在，不存在则新建)
+      let existingUser = null;
+      if (mockData.users) {
+        existingUser = mockData.users.find(u => u.username === adminPhone);
+      }
+      
+      if (!existingUser) {
+        // 创建新用户
+        const newUser = {
+          id: Date.now() + 2,
+          username: adminPhone,
+          fullName: adminName,
+          phone: adminPhone,
+          role: "项目管理员",
+          enterprise: enterprise ? enterprise.name : "未知企业",
+          project: name,
+          status: "激活",
+          createdAt: new Date().toISOString().split('T')[0]
+        };
+        if (mockData.users) {
+          mockData.users.push(newUser);
+        }
+        alert(`项目 "${name}" 创建成功！\n已自动创建负责人账号：${adminPhone}\n初始密码：123456`);
+      } else {
+         alert(`项目 "${name}" 创建成功！\n负责人账号 ${adminPhone} 已存在，已自动赋予该项目管理权限。`);
+      }
+
+      closeCreateProjectModal();
+      
+      // 如果当前显示的就是该企业，刷新项目列表
+      if (currentEnterpriseId === entId) {
+        currentEnterpriseProjects = enterprise.projects || [];
+        renderProjectList(currentEnterpriseProjects);
+        // 更新项目总数
+        document.getElementById('detail-projects-count').textContent = enterprise.projects.length;
+      }
+    }
+
+    function switchTab(tabName) {
+      // Hide all contents
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      // Show selected content
+      document.getElementById(`content-${tabName}`).classList.remove('hidden');
+      
+      // Reset all buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-blue-500', 'text-blue-600');
+        btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+      });
+      
+      // Activate selected button
+      const activeBtn = document.getElementById(`tab-${tabName}`);
+      activeBtn.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+      activeBtn.classList.add('border-blue-500', 'text-blue-600');
+    }
+
+    // 获取项目负责人的手机号（与project.html中的逻辑一致）
+    function getProjectAdminPhone(proj) {
+      // 1. 先从teamMembers中查找匹配的成员
+      if (proj.teamMembers && proj.teamMembers.length > 0) {
+        const adminMember = proj.teamMembers.find(m => m.name === proj.projectAdmin);
+        if (adminMember && adminMember.phone) {
+          return adminMember.phone;
+        }
+        // 如果没有找到匹配的，取第一个成员的手机号
+        if (proj.teamMembers[0].phone) {
+          return proj.teamMembers[0].phone;
+        }
+      }
+      
+      // 2. 从mockData.users中查找
+      if (typeof mockData !== 'undefined' && mockData.users) {
+        const user = mockData.users.find(u => u.fullName === proj.projectAdmin || u.phone === proj.projectAdmin);
+        if (user && user.phone) {
+          return user.phone;
+        }
+      }
+      
+      // 3. 生成示例手机号（基于项目负责人姓名，生成一个固定的示例号码）
+      const phoneMap = {
+        '李博迪': '13800138001',
+        '陈明浩': '13800138002',
+        '赵奔': '13800138003'
+      };
+      
+      if (phoneMap[proj.projectAdmin]) {
+        return phoneMap[proj.projectAdmin];
+      }
+      
+      // 默认生成一个示例手机号
+      return '13800000000';
+    }
+
+    function renderProjectList(projects) {
+      const projectBody = document.getElementById('project-list-body');
+      projectBody.innerHTML = '';
+      
+      if (projects.length === 0) {
+        projectBody.innerHTML = '<tr><td colspan="6" class="px-4 py-4 text-center text-gray-500 text-sm">暂无项目</td></tr>';
+        return;
+      }
+      
+      projects.forEach(proj => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50 transition-colors';
+        
+        // 获取负责人手机号
+        const adminPhone = getProjectAdminPhone(proj);
+        
+        // 计算存储和AI配额
+        let storageTotal, aiTotal;
+        if (proj.quota && proj.quota.storage && proj.quota.aiTokens) {
+          storageTotal = proj.quota.storage.total;
+          aiTotal = proj.quota.aiTokens.total;
+        } else {
+          // 如果没有quota，根据版本估算
+          const version = proj.version || '基础版';
+          if (version === '旗舰版') {
+            storageTotal = 5000;
+            aiTotal = 500000;
+          } else {
+            storageTotal = 1000;
+            aiTotal = 100000;
+          }
+        }
+
+        tr.innerHTML = `
+          <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+            <a href="project-detail.html?id=${proj.id}" class="text-blue-600 hover:text-blue-900 hover:underline">
+              ${proj.name}
+            </a>
+          </td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${proj.version === '旗舰版' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">
+              ${proj.version || '基础版'}
+            </span>
+          </td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${proj.projectAdmin}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${adminPhone}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+            ${proj.storageUsed || 0} / ${storageTotal} GB
+          </td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+            ${proj.aiUsed || 0} / ${aiTotal}
+          </td>
+        `;
+        projectBody.appendChild(tr);
+      });
+    }
+
+    function filterProjectList() {
+      if (!currentEnterpriseProjects || currentEnterpriseProjects.length === 0) {
+        renderProjectList([]);
+        return;
+      }
+
+      const nameFilter = document.getElementById('project-filter-name').value.toLowerCase();
+      const versionFilter = document.getElementById('project-filter-version').value;
+      const adminFilter = document.getElementById('project-filter-admin').value.toLowerCase();
+      const phoneFilter = document.getElementById('project-filter-phone').value;
+
+      const filtered = currentEnterpriseProjects.filter(proj => {
+        const matchName = !nameFilter || proj.name.toLowerCase().includes(nameFilter);
+        const matchVersion = !versionFilter || (proj.version || '基础版') === versionFilter;
+        const matchAdmin = !adminFilter || proj.projectAdmin.toLowerCase().includes(adminFilter);
+        const adminMember = proj.teamMembers ? proj.teamMembers.find(m => m.name === proj.projectAdmin) : null;
+        const adminPhone = adminMember ? adminMember.phone : '';
+        const matchPhone = !phoneFilter || adminPhone.includes(phoneFilter);
+
+        return matchName && matchVersion && matchAdmin && matchPhone;
+      });
+
+      renderProjectList(filtered);
+    }
+
+    // 额度消费记录相关函数
+    let quotaConsumptionData = []; // 存储消费记录数据
+    let currentQuotaFilter = null; // 当前筛选的资源类型
+    let filteredQuotaData = []; // 筛选后的数据
+    let currentQuotaPage = 1; // 当前页码
+    const quotaPageSize = 10; // 每页显示条数
+
+    function openQuotaConsumptionModal(resourceType = null, resourceLabel = null) {
+      currentQuotaFilter = resourceType;
+      
+      // 设置标题
+      const titleEl = document.getElementById('quota-modal-title');
+      if (resourceType && resourceLabel) {
+        titleEl.textContent = `${resourceLabel} - 额度消费记录`;
+      } else {
+        titleEl.textContent = '额度消费记录';
+      }
+
+      // 设置筛选条件
+      if (resourceType) {
+        document.getElementById('quota-filter-type').value = resourceType;
+      } else {
+        document.getElementById('quota-filter-type').value = '';
+      }
+
+      // 生成模拟数据
+      generateQuotaConsumptionData(resourceType);
+
+      // 重置到第一页
+      currentQuotaPage = 1;
+
+      // 渲染表格（会自动应用筛选和分页）
+      renderQuotaConsumption();
+
+      // 显示模态框
+      document.getElementById('quota-consumption-modal').classList.remove('hidden');
+    }
+
+    function closeQuotaConsumptionModal() {
+      document.getElementById('quota-consumption-modal').classList.add('hidden');
+      currentQuotaFilter = null;
+    }
+
+    function generateQuotaConsumptionData(resourceType = null) {
+      quotaConsumptionData = [];
+      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      if (!ent) return;
+
+      // 资源类型映射
+      const typeMap = {
+        'storage': '存储空间',
+        'aiTokens': 'AI 使用量',
+        'liveStream': '视频直播',
+        'baseLicense': '基础版账号',
+        'premiumLicense': '旗舰版账号'
+      };
+
+      // 生成最近30天的消费记录
+      const types = resourceType ? [resourceType] : Object.keys(typeMap);
+      
+      ent.projects.forEach(proj => {
+        types.forEach(type => {
+          // 每天生成1-3条记录
+          for (let i = 0; i < 30; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const recordCount = Math.floor(Math.random() * 3) + 1;
+            
+            for (let j = 0; j < recordCount; j++) {
+              const consumption = Math.floor(Math.random() * 100) + 1;
+              quotaConsumptionData.push({
+                date: date.toISOString().split('T')[0],
+                time: `${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
+                type: typeMap[type],
+                projectName: proj.name,
+                consumption: consumption,
+                operation: Math.random() > 0.5 ? '消费' : '分配'
+              });
+            }
+          }
+        });
+      });
+
+      // 按日期倒序排列
+      quotaConsumptionData.sort((a, b) => {
+        const dateCompare = b.date.localeCompare(a.date);
+        if (dateCompare !== 0) return dateCompare;
+        return b.time.localeCompare(a.time);
+      });
+    }
+
+    function renderQuotaConsumption() {
+      // 先应用筛选
+      filterQuotaConsumptionData();
+      // 然后渲染当前页
+      renderQuotaConsumptionPage();
+    }
+
+    function filterQuotaConsumptionData() {
+      const typeFilterValue = document.getElementById('quota-filter-type').value;
+      const projectFilter = document.getElementById('quota-filter-project').value.toLowerCase();
+      const startDate = document.getElementById('quota-filter-start').value;
+      const endDate = document.getElementById('quota-filter-end').value;
+
+      // 类型映射
+      const typeMap = {
+        'storage': '存储空间',
+        'aiTokens': 'AI 使用量',
+        'liveStream': '视频直播',
+        'baseLicense': '基础版账号',
+        'premiumLicense': '旗舰版账号'
+      };
+      const typeFilterLabel = typeFilterValue ? typeMap[typeFilterValue] : null;
+
+      filteredQuotaData = quotaConsumptionData.filter(record => {
+        const matchType = !typeFilterLabel || record.type === typeFilterLabel;
+        const matchProject = !projectFilter || record.projectName.toLowerCase().includes(projectFilter);
+        const matchStart = !startDate || record.date >= startDate;
+        const matchEnd = !endDate || record.date <= endDate;
+
+        return matchType && matchProject && matchStart && matchEnd;
+      });
+
+      // 重置到第一页
+      currentQuotaPage = 1;
+    }
+
+    function renderQuotaConsumptionPage() {
+      const tbody = document.getElementById('quota-consumption-body');
+      tbody.innerHTML = '';
+
+      if (filteredQuotaData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500 text-sm">暂无消费记录</td></tr>';
+        updateQuotaPaginationInfo(0);
+        return;
+      }
+
+      // 计算分页
+      const totalPages = Math.ceil(filteredQuotaData.length / quotaPageSize);
+      const startIndex = (currentQuotaPage - 1) * quotaPageSize;
+      const endIndex = Math.min(startIndex + quotaPageSize, filteredQuotaData.length);
+      const pageData = filteredQuotaData.slice(startIndex, endIndex);
+
+      pageData.forEach(record => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50';
+        tr.innerHTML = `
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${record.date} ${record.time}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${record.type}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${record.projectName}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-medium">${record.consumption.toLocaleString()}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm">
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium ${record.operation === '消费' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+              ${record.operation}
+            </span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // 更新分页信息
+      updateQuotaPaginationInfo(filteredQuotaData.length, startIndex + 1, endIndex, totalPages);
+    }
+
+    function updateQuotaPaginationInfo(total, start = 0, end = 0, totalPages = 0) {
+      document.getElementById('quota-total-count').textContent = total;
+      document.getElementById('quota-page-start').textContent = start || 0;
+      document.getElementById('quota-page-end').textContent = end || 0;
+
+      // 更新页码按钮
+      const pageNumbersEl = document.getElementById('quota-page-numbers');
+      pageNumbersEl.innerHTML = '';
+
+      if (totalPages <= 1) {
+        // 只有一页或没有数据，不显示页码
+        return;
+      }
+
+      // 显示页码（最多显示7个页码）
+      let startPage = Math.max(1, currentQuotaPage - 3);
+      let endPage = Math.min(totalPages, currentQuotaPage + 3);
+
+      if (currentQuotaPage <= 4) {
+        endPage = Math.min(7, totalPages);
+      }
+      if (currentQuotaPage >= totalPages - 3) {
+        startPage = Math.max(1, totalPages - 6);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.onclick = () => changeQuotaPage(i);
+        pageBtn.className = `relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+          i === currentQuotaPage
+            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+        }`;
+        pageBtn.textContent = i;
+        pageNumbersEl.appendChild(pageBtn);
+      }
+
+      // 更新上一页/下一页按钮状态（桌面版和移动版）
+      const prevBtn = document.getElementById('quota-prev-btn');
+      const nextBtn = document.getElementById('quota-next-btn');
+      const prevBtnMobile = document.getElementById('quota-prev-btn-mobile');
+      const nextBtnMobile = document.getElementById('quota-next-btn-mobile');
+      
+      const buttons = [prevBtn, prevBtnMobile, nextBtn, nextBtnMobile];
+      
+      if (currentQuotaPage === 1) {
+        if (prevBtn) {
+          prevBtn.disabled = true;
+          prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+        if (prevBtnMobile) {
+          prevBtnMobile.disabled = true;
+          prevBtnMobile.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+      } else {
+        if (prevBtn) {
+          prevBtn.disabled = false;
+          prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+        if (prevBtnMobile) {
+          prevBtnMobile.disabled = false;
+          prevBtnMobile.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+      }
+      
+      if (currentQuotaPage >= totalPages) {
+        if (nextBtn) {
+          nextBtn.disabled = true;
+          nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+        if (nextBtnMobile) {
+          nextBtnMobile.disabled = true;
+          nextBtnMobile.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+      } else {
+        if (nextBtn) {
+          nextBtn.disabled = false;
+          nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+        if (nextBtnMobile) {
+          nextBtnMobile.disabled = false;
+          nextBtnMobile.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+      }
+    }
+
+    function changeQuotaPage(page) {
+      const totalPages = Math.ceil(filteredQuotaData.length / quotaPageSize);
+      if (page < 1 || page > totalPages) return;
+      currentQuotaPage = page;
+      renderQuotaConsumptionPage();
+    }
+
+    function filterQuotaConsumption() {
+      // 重新筛选并渲染
+      renderQuotaConsumption();
+    }
+
+    function renderResourceGrid(quota) {
+      const grid = document.getElementById('resource-grid');
+      grid.innerHTML = '';
+      grid.className = 'flex flex-col gap-6'; // Change from grid to flex-col for sections
+
+      if (!quota || Object.keys(quota).length === 0) {
+        grid.innerHTML = '<p class="text-gray-500 text-sm">暂无配额数据</p>';
+        return;
+      }
+
+      // Definition of sections
+      const sections = [
+        {
+          title: '版本资源概览',
+          items: [
+            { key: 'baseLicense', label: '基础版账号', color: 'green' },
+            { key: 'premiumLicense', label: '旗舰版账号', color: 'purple' }
+          ]
+        },
+        {
+          title: '基础资源概览',
+          items: [
+            { key: 'storage', label: '存储空间', color: 'blue' },
+            { key: 'aiTokens', label: 'AI 使用量', color: 'indigo' },
+            { key: 'liveStream', label: '视频直播', color: 'pink' }
+          ]
+        }
+      ];
+
+      sections.forEach(section => {
+        const sectionDiv = document.createElement('div');
+        sectionDiv.innerHTML = `<h4 class="text-sm font-semibold text-gray-700 mb-3">${section.title}</h4>`;
+        
+        const itemsGrid = document.createElement('div');
+        itemsGrid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+
+        let hasItems = false;
+        section.items.forEach(res => {
+          const data = quota[res.key];
+          if (!data) return;
+          hasItems = true;
+
+          const percentage = data.total > 0 ? Math.round((data.used / data.total) * 100) : 0;
+          const unit = data.unit || '';
+          
+          const card = document.createElement('div');
+          card.className = "bg-gray-50 p-4 rounded-lg border border-gray-100 cursor-pointer hover:bg-gray-100 transition-colors";
+          
+          // 版本资源卡片：跳转到项目列表tab并筛选版本
+          if (section.title === '版本资源概览') {
+            const versionFilter = res.key === 'baseLicense' ? '基础版' : '旗舰版';
+            card.onclick = () => {
+              switchTab('projects');
+              // 设置筛选条件
+              setTimeout(() => {
+                document.getElementById('project-filter-version').value = versionFilter;
+                filterProjectList();
+              }, 100); // 延迟确保tab已经切换
+            };
+          } else {
+            // 基础资源卡片：弹出额度消费记录详情页
+            card.onclick = () => {
+              openQuotaConsumptionModal(res.key, res.label);
+            };
+          }
+          
+          card.innerHTML = `
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-medium text-gray-700">${res.label}</span>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-${res.color}-100 text-${res.color}-800">
+                ${percentage}%
+              </span>
+            </div>
+            <div class="flex items-end space-x-1 mb-2">
+              <span class="text-xl font-bold text-gray-900">${data.used.toLocaleString()}</span>
+              <span class="text-sm text-gray-500 mb-1">/ ${data.total.toLocaleString()} ${unit}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-1.5">
+              <div class="bg-${res.color}-500 h-1.5 rounded-full" style="width: ${percentage}%"></div>
+            </div>
+          `;
+          itemsGrid.appendChild(card);
+        });
+
+        if (hasItems) {
+          sectionDiv.appendChild(itemsGrid);
+          grid.appendChild(sectionDiv);
+        }
+      });
+    }
+
+    function updateChart(ent) {
+      const chartEl = document.getElementById('resourceChart');
+      if (!chartEl) return;
+      const ctx = chartEl.getContext('2d');
+      
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      // 获取当前使用量作为基准
+      const storageUsed = ent.quota && ent.quota.storage ? ent.quota.storage.used : 1000;
+      const aiUsed = ent.quota && ent.quota.aiTokens ? ent.quota.aiTokens.used : 500000;
+      const liveUsed = ent.quota && ent.quota.liveStream ? ent.quota.liveStream.used : 1200;
+
+      // 模拟近6个月的月度数据，基于当前使用量生成趋势
+      const labels = ['1月', '2月', '3月', '4月', '5月', '6月'];
+      
+      // 存储空间趋势（蓝色）- 基于当前使用量生成变化趋势
+      const dataStorage = [
+        Math.round(storageUsed * 0.2),
+        Math.round(storageUsed * 0.3),
+        Math.round(storageUsed * 0.6),
+        Math.round(storageUsed * 0.9),
+        Math.round(storageUsed * 0.4),
+        storageUsed
+      ];
+      
+      // AI使用量趋势（紫色/indigo）- 基于当前使用量生成变化趋势
+      const dataAI = [
+        Math.round(aiUsed * 0.1),
+        Math.round(aiUsed * 0.2),
+        Math.round(aiUsed * 0.3),
+        Math.round(aiUsed * 0.4),
+        Math.round(aiUsed * 0.5),
+        aiUsed
+      ];
+      
+      // 视频直播趋势（粉色）- 基于当前使用量生成变化趋势
+      const dataLive = [
+        Math.round(liveUsed * 0.1),
+        Math.round(liveUsed * 0.2),
+        Math.round(liveUsed * 0.3),
+        Math.round(liveUsed * 0.4),
+        Math.round(liveUsed * 0.5),
+        liveUsed
+      ];
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '存储空间',
+              data: dataStorage,
+              borderColor: 'rgb(59, 130, 246)', // blue-500
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'AI 使用量',
+              data: dataAI,
+              borderColor: 'rgb(99, 102, 241)', // indigo-500
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: '视频直播',
+              data: dataLive,
+              borderColor: 'rgb(236, 72, 153)', // pink-500
+              backgroundColor: 'rgba(236, 72, 153, 0.1)',
+              tension: 0.4,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
