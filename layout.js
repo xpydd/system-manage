@@ -1,4 +1,4 @@
-// prototypes/layout.js
+// layout.js
 
 function renderLayout(activePageTitle) {
   // 插入侧边栏
