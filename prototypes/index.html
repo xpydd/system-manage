@@ -57,9 +57,32 @@
               <div>
                 <h2 class="text-2xl font-bold text-gray-900" id="detail-name">选择企业</h2>
               </div>
-              <div class="flex space-x-2">
-                <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm">编辑信息</button>
-                <button class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm">更多操作</button>
+              <div class="flex space-x-2 relative">
+                <button onclick="openEditEnterpriseModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm">编辑信息</button>
+                <div class="relative">
+                  <button onclick="toggleMoreActionsMenu()" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm flex items-center">
+                    更多操作
+                    <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </button>
+                  <div id="more-actions-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                    <div class="py-1">
+                      <button onclick="exportEnterpriseData()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <svg class="inline-block h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        导出数据
+                      </button>
+                      <button onclick="openDeleteEnterpriseModal()" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                        <svg class="inline-block h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        删除企业
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -350,6 +373,123 @@
             保存
           </button>
           <button type="button" onclick="closeAddEnterpriseModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Enterprise Modal -->
+  <div id="edit-enterprise-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="edit-modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeEditEnterpriseModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <h3 class="text-lg leading-6 font-medium text-gray-900" id="edit-modal-title">编辑企业信息</h3>
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">企业名称 <span class="text-red-500">*</span></label>
+              <input type="text" id="edit-ent-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            
+            <!-- 套餐额度配置 -->
+            <div class="bg-blue-50 p-3 rounded-md border border-blue-200">
+               <p class="text-xs text-blue-700 mb-2 font-medium">资源配额配置</p>
+               
+               <!-- 版本资源 (输入) -->
+               <div class="mb-4 pb-4 border-b border-blue-200">
+                 <p class="text-xs text-blue-600 mb-2 font-medium">版本账号数量</p>
+                 <div class="grid grid-cols-2 gap-4">
+                   <div>
+                     <label class="block text-sm font-medium text-gray-700">基础版账号 <span class="text-red-500">*</span></label>
+                     <input type="number" id="edit-quota-base" min="0" required oninput="calculateEditResources()" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                     <p class="text-xs text-gray-500 mt-1">含: 10G存储, 1万AI</p>
+                   </div>
+                   <div>
+                     <label class="block text-sm font-medium text-gray-700">旗舰版账号 <span class="text-red-500">*</span></label>
+                     <input type="number" id="edit-quota-premium" min="0" required oninput="calculateEditResources()" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                     <p class="text-xs text-gray-500 mt-1">含: 100G存储, 10万AI, 100分直播</p>
+                   </div>
+                 </div>
+               </div>
+
+               <!-- 基础资源 (自动计算) -->
+               <div>
+                 <p class="text-xs text-blue-600 mb-2 font-medium">基础资源 (自动叠加)</p>
+                 <div class="grid grid-cols-3 gap-4 text-center">
+                   <div class="bg-white p-2 rounded border border-blue-100">
+                     <p class="text-xs text-gray-500">存储空间</p>
+                     <p class="font-bold text-blue-700" id="edit-calc-storage">0 GB</p>
+                   </div>
+                   <div class="bg-white p-2 rounded border border-blue-100">
+                     <p class="text-xs text-gray-500">AI Tokens</p>
+                     <p class="font-bold text-blue-700" id="edit-calc-ai">0</p>
+                   </div>
+                   <div class="bg-white p-2 rounded border border-blue-100">
+                     <p class="text-xs text-gray-500">直播时长</p>
+                     <p class="font-bold text-blue-700" id="edit-calc-live">0 分钟</p>
+                   </div>
+                 </div>
+               </div>
+            </div>
+
+            <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
+               <p class="text-xs text-gray-500 mb-2 font-medium">企业管理员信息</p>
+               <div class="grid grid-cols-2 gap-4">
+                 <div>
+                   <label class="block text-sm font-medium text-gray-700">姓名 <span class="text-red-500">*</span></label>
+                   <input type="text" id="edit-ent-admin-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                 </div>
+                 <div>
+                   <label class="block text-sm font-medium text-gray-700">手机号 <span class="text-red-500">*</span></label>
+                   <input type="text" id="edit-ent-admin-phone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                 </div>
+               </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" onclick="saveEditEnterprise()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+            保存
+          </button>
+          <button type="button" onclick="closeEditEnterpriseModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Enterprise Confirmation Modal -->
+  <div id="delete-enterprise-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="delete-modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeDeleteEnterpriseModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+              <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-lg leading-6 font-medium text-gray-900" id="delete-modal-title">删除企业</h3>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500">
+                  确定要删除企业 "<span id="delete-enterprise-name" class="font-semibold text-gray-900"></span>" 吗？此操作不可恢复，将同时删除该企业下的所有项目和关联数据。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" onclick="confirmDeleteEnterprise()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+            确认删除
+          </button>
+          <button type="button" onclick="closeDeleteEnterpriseModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
             取消
           </button>
         </div>
@@ -656,6 +796,292 @@
        renderEnterpriseTree();
        selectEnterprise(newEnt.id);
        closeAddEnterpriseModal();
+    }
+
+    // 编辑企业相关函数
+    window.openEditEnterpriseModal = function() {
+      if (!currentEnterpriseId) {
+        alert('请先选择企业');
+        return;
+      }
+      
+      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      if (!ent) return;
+
+      // 填充表单数据
+      document.getElementById('edit-ent-name').value = ent.name;
+      document.getElementById('edit-quota-base').value = ent.quota?.baseLicense?.total || 0;
+      document.getElementById('edit-quota-premium').value = ent.quota?.premiumLicense?.total || 0;
+      
+      // 解析管理员信息
+      const contactInfo = ent.contactInfo || '';
+      const adminMatch = contactInfo.match(/联系人：(.+?)，电话：(.+)/);
+      const adminName = adminMatch ? adminMatch[1] : '';
+      const adminPhone = adminMatch ? adminMatch[2] : '';
+      
+      document.getElementById('edit-ent-admin-name').value = adminName;
+      document.getElementById('edit-ent-admin-phone').value = adminPhone;
+      
+      // 计算并显示资源
+      calculateEditResources();
+      
+      document.getElementById('edit-enterprise-modal').classList.remove('hidden');
+    }
+
+    window.closeEditEnterpriseModal = function() {
+      document.getElementById('edit-enterprise-modal').classList.add('hidden');
+    }
+
+    window.calculateEditResources = function() {
+      const baseCount = parseInt(document.getElementById('edit-quota-base').value) || 0;
+      const premiumCount = parseInt(document.getElementById('edit-quota-premium').value) || 0;
+
+      const totalStorage = (baseCount * RESOURCE_RULES.base.storage) + (premiumCount * RESOURCE_RULES.premium.storage);
+      const totalAi = (baseCount * RESOURCE_RULES.base.ai) + (premiumCount * RESOURCE_RULES.premium.ai);
+      const totalLive = (baseCount * RESOURCE_RULES.base.live) + (premiumCount * RESOURCE_RULES.premium.live);
+
+      document.getElementById('edit-calc-storage').textContent = `${totalStorage} GB`;
+      document.getElementById('edit-calc-ai').textContent = totalAi.toLocaleString();
+      document.getElementById('edit-calc-live').textContent = `${totalLive} 分钟`;
+
+      return { totalStorage, totalAi, totalLive };
+    }
+
+    window.saveEditEnterprise = function() {
+      if (!currentEnterpriseId) return;
+      
+      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      if (!ent) return;
+
+      const name = document.getElementById('edit-ent-name').value;
+      const adminName = document.getElementById('edit-ent-admin-name').value;
+      const adminPhone = document.getElementById('edit-ent-admin-phone').value;
+      const qBaseValue = document.getElementById('edit-quota-base').value;
+      const qPremiumValue = document.getElementById('edit-quota-premium').value;
+      const qBase = parseInt(qBaseValue);
+      const qPremium = parseInt(qPremiumValue);
+      
+      const { totalStorage, totalAi, totalLive } = calculateEditResources();
+
+      // 验证
+      if (!name || !adminName || !adminPhone) {
+        alert('请填写完整信息');
+        return;
+      }
+      
+      if (qBaseValue === '' || isNaN(qBase) || qBase < 0) {
+        alert('请输入有效的基础版账号数量');
+        return;
+      }
+      
+      if (qPremiumValue === '' || isNaN(qPremium) || qPremium < 0) {
+        alert('请输入有效的旗舰版账号数量');
+        return;
+      }
+      
+      if (!/^1[3-9]\d{9}$/.test(adminPhone)) {
+        alert('请输入有效的手机号');
+        return;
+      }
+
+      // 检查配额是否足够（新配额不能小于已使用量）
+      const currentUsed = {
+        storage: ent.quota?.storage?.used || 0,
+        baseLicense: ent.quota?.baseLicense?.used || 0,
+        premiumLicense: ent.quota?.premiumLicense?.used || 0,
+        aiTokens: ent.quota?.aiTokens?.used || 0,
+        liveStream: ent.quota?.liveStream?.used || 0
+      };
+
+      if (totalStorage < currentUsed.storage) {
+        alert(`存储空间配额不能小于已使用量 (${currentUsed.storage} GB)`);
+        return;
+      }
+      if (qBase < currentUsed.baseLicense) {
+        alert(`基础版账号数量不能小于已使用量 (${currentUsed.baseLicense})`);
+        return;
+      }
+      if (qPremium < currentUsed.premiumLicense) {
+        alert(`旗舰版账号数量不能小于已使用量 (${currentUsed.premiumLicense})`);
+        return;
+      }
+      if (totalAi < currentUsed.aiTokens) {
+        alert(`AI Tokens配额不能小于已使用量 (${currentUsed.aiTokens})`);
+        return;
+      }
+      if (totalLive < currentUsed.liveStream) {
+        alert(`直播时长配额不能小于已使用量 (${currentUsed.liveStream} 分钟)`);
+        return;
+      }
+
+      // 更新企业信息
+      ent.name = name;
+      ent.contactInfo = `联系人：${adminName}，电话：${adminPhone}`;
+      
+      // 更新配额（保留已使用量）
+      ent.quota = {
+        storage: { total: totalStorage, used: currentUsed.storage, unit: "GB" },
+        baseLicense: { total: qBase, used: currentUsed.baseLicense },
+        premiumLicense: { total: qPremium, used: currentUsed.premiumLicense },
+        aiTokens: { total: totalAi, used: currentUsed.aiTokens },
+        liveStream: { total: totalLive, used: currentUsed.liveStream, unit: "分钟" }
+      };
+
+      // 更新管理员用户信息
+      if (mockData.users) {
+        const adminUser = mockData.users.find(u => u.enterprise === ent.name && u.role === "企业管理员");
+        if (adminUser) {
+          adminUser.fullName = adminName;
+          adminUser.phone = adminPhone;
+          adminUser.username = adminPhone;
+          adminUser.enterprise = name; // 如果企业名称改变，同步更新
+        }
+      }
+
+      // 如果企业名称改变，需要更新所有相关用户的enterprise字段
+      if (name !== ent.name) {
+        if (mockData.users) {
+          mockData.users.forEach(u => {
+            if (u.enterprise === ent.name) {
+              u.enterprise = name;
+            }
+          });
+        }
+      }
+
+      // 刷新视图
+      renderEnterpriseTree();
+      selectEnterprise(currentEnterpriseId);
+      closeEditEnterpriseModal();
+    }
+
+    // 更多操作菜单
+    window.toggleMoreActionsMenu = function() {
+      const menu = document.getElementById('more-actions-menu');
+      if (menu) {
+        menu.classList.toggle('hidden');
+      }
+      
+      // 点击外部关闭菜单
+      document.addEventListener('click', function closeMenuOnOutsideClick(e) {
+        if (!e.target.closest('#more-actions-menu') && !e.target.closest('button[onclick="toggleMoreActionsMenu()"]')) {
+          menu.classList.add('hidden');
+          document.removeEventListener('click', closeMenuOnOutsideClick);
+        }
+      });
+    }
+
+    window.exportEnterpriseData = function() {
+      if (!currentEnterpriseId) {
+        alert('请先选择企业');
+        return;
+      }
+      
+      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      if (!ent) return;
+
+      // 构建导出数据
+      const exportData = {
+        企业名称: ent.name,
+        管理员: ent.contactInfo,
+        注册时间: ent.createdAt,
+        项目数量: ent.projects.length,
+        资源配额: {
+          存储空间: `${ent.quota?.storage?.used || 0}/${ent.quota?.storage?.total || 0} GB`,
+          基础版账号: `${ent.quota?.baseLicense?.used || 0}/${ent.quota?.baseLicense?.total || 0}`,
+          旗舰版账号: `${ent.quota?.premiumLicense?.used || 0}/${ent.quota?.premiumLicense?.total || 0}`,
+          AI使用量: `${ent.quota?.aiTokens?.used || 0}/${ent.quota?.aiTokens?.total || 0}`,
+          视频直播: `${ent.quota?.liveStream?.used || 0}/${ent.quota?.liveStream?.total || 0} 分钟`
+        },
+        项目列表: ent.projects.map(p => ({
+          项目名称: p.name,
+          负责人: p.projectAdmin,
+          状态: p.status
+        }))
+      };
+
+      // 转换为JSON并下载
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${ent.name}_数据导出_${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      // 关闭菜单
+      document.getElementById('more-actions-menu').classList.add('hidden');
+    }
+
+    window.openDeleteEnterpriseModal = function() {
+      if (!currentEnterpriseId) {
+        alert('请先选择企业');
+        return;
+      }
+      
+      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      if (!ent) return;
+
+      document.getElementById('delete-enterprise-name').textContent = ent.name;
+      document.getElementById('delete-enterprise-modal').classList.remove('hidden');
+      
+      // 关闭更多操作菜单
+      document.getElementById('more-actions-menu').classList.add('hidden');
+    }
+
+    window.closeDeleteEnterpriseModal = function() {
+      document.getElementById('delete-enterprise-modal').classList.add('hidden');
+    }
+
+    window.confirmDeleteEnterprise = function() {
+      if (!currentEnterpriseId) return;
+      
+      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      if (!ent) return;
+
+      // 检查是否有项目
+      if (ent.projects && ent.projects.length > 0) {
+        if (!confirm(`该企业下有 ${ent.projects.length} 个项目，确定要删除吗？`)) {
+          return;
+        }
+      }
+
+      // 删除企业
+      const index = mockData.enterprises.findIndex(e => e.id === currentEnterpriseId);
+      if (index > -1) {
+        mockData.enterprises.splice(index, 1);
+      }
+
+      // 删除相关用户
+      if (mockData.users) {
+        mockData.users = mockData.users.filter(u => u.enterprise !== ent.name);
+      }
+
+      // 重置当前选择
+      currentEnterpriseId = null;
+      
+      // 刷新视图
+      renderEnterpriseTree();
+      
+      // 清空详情显示
+      document.getElementById('detail-name').textContent = '选择企业';
+      document.getElementById('detail-contact').textContent = '-';
+      document.getElementById('detail-date').textContent = '-';
+      document.getElementById('detail-projects-count').textContent = '0';
+      
+      // 清空各个tab的内容
+      document.getElementById('project-list-body').innerHTML = '';
+      document.getElementById('device-list-body').innerHTML = '';
+      document.getElementById('member-list-body').innerHTML = '';
+      
+      // 关闭模态框
+      closeDeleteEnterpriseModal();
+      
+      // 如果还有企业，选中第一个
+      if (mockData.enterprises.length > 0) {
+        selectEnterprise(mockData.enterprises[0].id);
+      }
     }
 
     // 初始化
