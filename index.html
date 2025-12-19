@@ -37,25 +37,27 @@
     <main class="flex-1 overflow-auto p-6">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
         
-        <!-- 左侧：企业树形列表 -->
+        <!-- 左侧：组织树形列表 -->
         <div class="lg:col-span-3 flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-            <h3 class="font-semibold text-gray-700">企业列表</h3>
-            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium" onclick="openAddEnterpriseModal()">+ 新增</button>
+            <h3 class="font-semibold text-gray-700">组织架构</h3>
+            <div class="flex space-x-2">
+              <button class="text-blue-600 hover:text-blue-800 text-sm font-medium" onclick="openAddEnterpriseModal(null)">+ 新增企业</button>
+            </div>
           </div>
           <div class="flex-1 overflow-y-auto p-2" id="enterprise-tree">
-            <!-- 企业列表将通过JS渲染在这里 -->
+            <!-- 组织列表将通过JS渲染在这里 -->
           </div>
         </div>
 
-        <!-- 右侧：企业详情与统计 -->
+        <!-- 右侧：组织详情与统计 -->
         <div class="lg:col-span-9 flex flex-col gap-6 overflow-y-auto">
           
-          <!-- 企业基本信息卡片 -->
+          <!-- 组织基本信息卡片 -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex justify-between items-start mb-6">
               <div>
-                <h2 class="text-2xl font-bold text-gray-900" id="detail-name">选择企业</h2>
+                <h2 class="text-2xl font-bold text-gray-900" id="detail-name">选择组织</h2>
               </div>
               <div class="flex space-x-2 relative">
                 <button onclick="openEditEnterpriseModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm">编辑信息</button>
@@ -78,7 +80,7 @@
                         <svg class="inline-block h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
-                        删除企业
+                        删除组织
                       </button>
                     </div>
                   </div>
@@ -305,10 +307,24 @@
       <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
       <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">新增企业</h3>
+          <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">新增组织节点</h3>
           <div class="mt-4 space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700">企业名称 <span class="text-red-500">*</span></label>
+              <label class="block text-sm font-medium text-gray-700">父节点</label>
+              <select id="new-ent-parent" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="">无（创建根节点）</option>
+                <!-- JS动态填充 -->
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">节点类型 <span class="text-red-500">*</span></label>
+              <select id="new-ent-type" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="部门">部门</option>
+                <option value="分公司">分公司</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">节点名称 <span class="text-red-500">*</span></label>
               <input type="text" id="new-ent-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
             
@@ -354,7 +370,8 @@
             </div>
 
             <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
-               <p class="text-xs text-gray-500 mb-2 font-medium">企业管理员信息</p>
+               <p class="text-xs text-gray-500 mb-2 font-medium">节点管理员信息</p>
+               <p class="text-xs text-gray-400 mb-3">为当前节点设置管理员，管理员可以管理该节点及其所有子节点</p>
                <div class="grid grid-cols-2 gap-4">
                  <div>
                    <label class="block text-sm font-medium text-gray-700">姓名 <span class="text-red-500">*</span></label>
@@ -387,10 +404,10 @@
       <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
       <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <h3 class="text-lg leading-6 font-medium text-gray-900" id="edit-modal-title">编辑企业信息</h3>
+          <h3 class="text-lg leading-6 font-medium text-gray-900" id="edit-modal-title">编辑组织信息</h3>
           <div class="mt-4 space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700">企业名称 <span class="text-red-500">*</span></label>
+              <label class="block text-sm font-medium text-gray-700">组织名称 <span class="text-red-500">*</span></label>
               <input type="text" id="edit-ent-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
             
@@ -436,7 +453,7 @@
             </div>
 
             <div class="bg-gray-50 p-3 rounded-md border border-gray-200">
-               <p class="text-xs text-gray-500 mb-2 font-medium">企业管理员信息</p>
+               <p class="text-xs text-gray-500 mb-2 font-medium">节点管理员信息</p>
                <div class="grid grid-cols-2 gap-4">
                  <div>
                    <label class="block text-sm font-medium text-gray-700">姓名 <span class="text-red-500">*</span></label>
@@ -476,10 +493,10 @@
               </svg>
             </div>
             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-              <h3 class="text-lg leading-6 font-medium text-gray-900" id="delete-modal-title">删除企业</h3>
+              <h3 class="text-lg leading-6 font-medium text-gray-900" id="delete-modal-title">删除组织</h3>
               <div class="mt-2">
                 <p class="text-sm text-gray-500">
-                  确定要删除企业 "<span id="delete-enterprise-name" class="font-semibold text-gray-900"></span>" 吗？此操作不可恢复，将同时删除该企业下的所有项目和关联数据。
+                  确定要删除组织 "<span id="delete-enterprise-name" class="font-semibold text-gray-900"></span>" 吗？此操作不可恢复，将同时删除该组织下的所有项目和关联数据。
                 </p>
               </div>
             </div>
@@ -621,7 +638,8 @@
               <label class="block text-sm font-medium text-gray-700">角色 <span class="text-red-500">*</span></label>
               <select id="member-role" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                 <option value="">请选择角色</option>
-                <option value="企业管理员">企业管理员</option>
+                <option value="企业平台主管">企业平台主管</option>
+                <option value="项目平台主管">项目平台主管</option>
                 <option value="普通用户">普通用户</option>
                 <option value="财务">财务</option>
                 <option value="运营">运营</option>
@@ -701,12 +719,84 @@
       premium: { storage: 100, ai: 100000, live: 100 }
     };
 
-    function openAddEnterpriseModal() {
+    function openAddEnterpriseModal(parentId = null) {
+      // 填充父节点下拉框
+      const parentSelect = document.getElementById('new-ent-parent');
+      parentSelect.innerHTML = '<option value="">无（创建根节点）</option>';
+      
+      // 如果指定了父节点，禁用下拉框并自动选中
+      if (parentId) {
+        parentSelect.disabled = true;
+        
+        // 查找父节点信息并填充
+        const orgs = mockData.organizations || mockData.enterprises;
+        const parentNode = orgs.find(n => n.id === parentId);
+        if (parentNode) {
+          const option = document.createElement('option');
+          option.value = parentNode.id;
+          option.textContent = `${parentNode.type || '企业'} - ${parentNode.name}`;
+          option.selected = true;
+          parentSelect.appendChild(option);
+        }
+      } else {
+        // 没有指定父节点，启用下拉框并填充可选节点
+        parentSelect.disabled = false;
+        
+        // 获取当前用户有权限的节点（只能在自己管理的节点下创建子节点）
+        const accessibleNodes = getAccessibleNodes();
+        const currentUser = getCurrentUser();
+        
+        // 如果是超级管理员，可以创建根节点；否则只能在自己管理的节点下创建
+        if (currentUser && currentUser.role === "超级管理员") {
+          // 超级管理员可以看到所有节点
+          const allNodes = mockData.organizations || mockData.enterprises;
+          allNodes.forEach(node => {
+            const option = document.createElement('option');
+            option.value = node.id;
+            option.textContent = `${node.type || '企业'} - ${node.name}`;
+            parentSelect.appendChild(option);
+          });
+        } else {
+          // 子层级管理员只能在自己管理的节点下创建子节点
+          accessibleNodes.forEach(node => {
+            const option = document.createElement('option');
+            option.value = node.id;
+            option.textContent = `${node.type || '企业'} - ${node.name}`;
+            parentSelect.appendChild(option);
+          });
+          
+          // 如果不是超级管理员，默认选中第一个可访问的节点（如果有）
+          if (accessibleNodes.length > 0) {
+            parentSelect.value = accessibleNodes[0].id;
+          }
+        }
+      }
+      
+      // 重置表单
+      document.getElementById('new-ent-name').value = '';
+      document.getElementById('new-ent-type').value = '部门'; // 默认改为部门
+      document.getElementById('new-ent-admin-name').value = '';
+      document.getElementById('new-ent-admin-phone').value = '';
+      document.getElementById('new-quota-base').value = '20';
+      document.getElementById('new-quota-premium').value = '5';
+      
+      // 更新弹窗标题
+      const modalTitle = document.getElementById('modal-title');
+      if (parentId) {
+        modalTitle.textContent = '新增子节点';
+      } else {
+        modalTitle.textContent = '新增组织节点';
+      }
+      
       document.getElementById('add-enterprise-modal').classList.remove('hidden');
       calculateResources(); // 初始化计算
     }
 
     function closeAddEnterpriseModal() {
+      // 重置父节点下拉框状态
+      const parentSelect = document.getElementById('new-ent-parent');
+      parentSelect.disabled = false;
+      
       document.getElementById('add-enterprise-modal').classList.add('hidden');
     }
 
@@ -727,9 +817,26 @@
 
     function saveNewEnterprise() {
        const name = document.getElementById('new-ent-name').value;
-       // desc removed
+       const type = document.getElementById('new-ent-type').value;
+       const parentIdValue = document.getElementById('new-ent-parent').value;
+       const parentId = parentIdValue ? parseInt(parentIdValue) : null;
        const adminName = document.getElementById('new-ent-admin-name').value;
        const adminPhone = document.getElementById('new-ent-admin-phone').value;
+       
+       // 权限检查：如果不是超级管理员，只能在自己管理的节点下创建子节点
+       if (parentId) {
+         if (!isNodeAccessible(parentId)) {
+           alert('您没有权限在此节点下创建子节点');
+           return;
+         }
+       } else {
+         // 创建根节点需要超级管理员权限
+         const currentUser = getCurrentUser();
+         if (!currentUser || currentUser.role !== "超级管理员") {
+           alert('只有超级管理员可以创建根节点');
+           return;
+         }
+       }
 
        // Quota values from inputs
        const qBaseValue = document.getElementById('new-quota-base').value;
@@ -740,7 +847,7 @@
        // Calculate derived resources
        const { totalStorage, totalAi, totalLive } = calculateResources();
 
-       if (!name || !adminName || !adminPhone) {
+       if (!name || !type || !adminName || !adminPhone) {
          alert('请填写完整信息');
          return;
        }
@@ -760,10 +867,15 @@
          return;
        }
 
+       // 创建新节点
+       const newNodeId = Date.now();
        const newEnt = {
-         id: Date.now(),
+         id: newNodeId,
          name: name,
-         description: "新创建企业", // Default description
+         type: type,
+         parentId: parentId,
+         adminId: null, // 将在创建用户后设置
+         description: `新创建的${type}`,
          contactInfo: `联系人：${adminName}，电话：${adminPhone}`,
          createdAt: new Date().toISOString().split('T')[0],
          projects: [],
@@ -776,36 +888,44 @@
          }
        };
 
-       mockData.enterprises.push(newEnt);
+       // 添加到organizations数组
+       const orgs = mockData.organizations || mockData.enterprises;
+       orgs.push(newEnt);
        
-       // Add Admin User
+       // 创建管理员用户
+       const adminUserId = Date.now() + 1;
        if (mockData.users) {
           mockData.users.push({
-             id: Date.now() + 1,
+             id: adminUserId,
              username: adminPhone,
              fullName: adminName,
              phone: adminPhone,
-             role: "企业管理员",
+             role: "企业平台主管",
              enterprise: name,
+             organizationId: newNodeId, // 关联到组织节点
              project: "-",
              status: "激活",
              createdAt: new Date().toISOString().split('T')[0]
           });
        }
+       
+       // 设置节点的管理员ID
+       newEnt.adminId = adminUserId;
 
        renderEnterpriseTree();
        selectEnterprise(newEnt.id);
        closeAddEnterpriseModal();
     }
 
-    // 编辑企业相关函数
+    // 编辑组织相关函数
     window.openEditEnterpriseModal = function() {
       if (!currentEnterpriseId) {
-        alert('请先选择企业');
+        alert('请先选择组织');
         return;
       }
       
-      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      const orgs = mockData.organizations || mockData.enterprises;
+      const ent = orgs.find(e => e.id === currentEnterpriseId);
       if (!ent) return;
 
       // 填充表单数据
@@ -850,7 +970,8 @@
     window.saveEditEnterprise = function() {
       if (!currentEnterpriseId) return;
       
-      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      const orgs = mockData.organizations || mockData.enterprises;
+      const ent = orgs.find(e => e.id === currentEnterpriseId);
       if (!ent) return;
 
       const name = document.getElementById('edit-ent-name').value;
@@ -929,16 +1050,16 @@
 
       // 更新管理员用户信息
       if (mockData.users) {
-        const adminUser = mockData.users.find(u => u.enterprise === ent.name && u.role === "企业管理员");
+        const adminUser = mockData.users.find(u => (u.organizationId === ent.id || u.enterprise === ent.name) && (u.role === "企业平台主管" || u.role === "组织管理员" || u.role === "企业管理员" || u.role === "企业平台主管"));
         if (adminUser) {
           adminUser.fullName = adminName;
           adminUser.phone = adminPhone;
           adminUser.username = adminPhone;
-          adminUser.enterprise = name; // 如果企业名称改变，同步更新
+          adminUser.enterprise = name; // 如果组织名称改变，同步更新
         }
       }
 
-      // 如果企业名称改变，需要更新所有相关用户的enterprise字段
+      // 如果组织名称改变，需要更新所有相关用户的enterprise字段
       if (name !== ent.name) {
         if (mockData.users) {
           mockData.users.forEach(u => {
@@ -973,16 +1094,17 @@
 
     window.exportEnterpriseData = function() {
       if (!currentEnterpriseId) {
-        alert('请先选择企业');
+        alert('请先选择组织');
         return;
       }
       
-      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      const orgs = mockData.organizations || mockData.enterprises;
+      const ent = orgs.find(e => e.id === currentEnterpriseId);
       if (!ent) return;
 
       // 构建导出数据
       const exportData = {
-        企业名称: ent.name,
+        组织名称: ent.name,
         管理员: ent.contactInfo,
         注册时间: ent.createdAt,
         项目数量: ent.projects.length,
@@ -1016,11 +1138,12 @@
 
     window.openDeleteEnterpriseModal = function() {
       if (!currentEnterpriseId) {
-        alert('请先选择企业');
+        alert('请先选择组织');
         return;
       }
       
-      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      const orgs = mockData.organizations || mockData.enterprises;
+      const ent = orgs.find(e => e.id === currentEnterpriseId);
       if (!ent) return;
 
       document.getElementById('delete-enterprise-name').textContent = ent.name;
@@ -1037,25 +1160,49 @@
     window.confirmDeleteEnterprise = function() {
       if (!currentEnterpriseId) return;
       
-      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      const orgs = mockData.organizations || mockData.enterprises;
+      const ent = orgs.find(e => e.id === currentEnterpriseId);
       if (!ent) return;
 
+      // 获取所有子节点
+      const allDescendantIds = getAllDescendantIds(currentEnterpriseId);
+      const allRelatedNodes = orgs.filter(org => allDescendantIds.includes(org.id));
+      
+      // 统计所有相关节点的项目数
+      let totalProjects = 0;
+      allRelatedNodes.forEach(node => {
+        if (node.projects) {
+          totalProjects += node.projects.length;
+        }
+      });
+
       // 检查是否有项目
-      if (ent.projects && ent.projects.length > 0) {
-        if (!confirm(`该企业下有 ${ent.projects.length} 个项目，确定要删除吗？`)) {
+      if (totalProjects > 0) {
+        if (!confirm(`该节点及其所有子节点下共有 ${totalProjects} 个项目，确定要删除吗？删除后将同时删除所有子节点。`)) {
+          return;
+        }
+      } else {
+        if (!confirm(`确定要删除节点 "${ent.name}" 吗？删除后将同时删除所有子节点。`)) {
           return;
         }
       }
 
-      // 删除企业
-      const index = mockData.enterprises.findIndex(e => e.id === currentEnterpriseId);
-      if (index > -1) {
-        mockData.enterprises.splice(index, 1);
-      }
+      // 删除节点及其所有子节点
+      const nodesToDelete = allDescendantIds;
+      nodesToDelete.forEach(nodeId => {
+        const index = orgs.findIndex(e => e.id === nodeId);
+        if (index > -1) {
+          orgs.splice(index, 1);
+        }
+      });
 
-      // 删除相关用户
+      // 删除相关用户（通过organizationId或enterprise名称匹配）
       if (mockData.users) {
-        mockData.users = mockData.users.filter(u => u.enterprise !== ent.name);
+        allRelatedNodes.forEach(node => {
+          mockData.users = mockData.users.filter(u => 
+            u.organizationId !== node.id && u.enterprise !== node.name
+          );
+        });
       }
 
       // 重置当前选择
@@ -1065,7 +1212,7 @@
       renderEnterpriseTree();
       
       // 清空详情显示
-      document.getElementById('detail-name').textContent = '选择企业';
+      document.getElementById('detail-name').textContent = '选择组织';
       document.getElementById('detail-contact').textContent = '-';
       document.getElementById('detail-date').textContent = '-';
       document.getElementById('detail-projects-count').textContent = '0';
@@ -1078,9 +1225,16 @@
       // 关闭模态框
       closeDeleteEnterpriseModal();
       
-      // 如果还有企业，选中第一个
-      if (mockData.enterprises.length > 0) {
-        selectEnterprise(mockData.enterprises[0].id);
+      // 如果还有组织节点，选中第一个可访问的
+      if (orgs.length > 0) {
+        const accessibleIds = getAccessibleNodeIds();
+        if (accessibleIds === null) {
+          // 超级管理员，选中第一个
+          selectEnterprise(orgs[0].id);
+        } else if (accessibleIds.length > 0) {
+          // 子层级管理员，选中第一个可访问的
+          selectEnterprise(accessibleIds[0]);
+        }
       }
     }
 
@@ -1090,9 +1244,20 @@
       renderLayout('企业管理');
 
       renderEnterpriseTree();
-      // 默认选中第一个
-      if (mockData.enterprises.length > 0) {
-        selectEnterprise(mockData.enterprises[0].id);
+      // 默认选中第一个可访问的节点
+      const orgs = mockData.organizations || mockData.enterprises;
+      if (orgs.length > 0) {
+        const accessibleIds = getAccessibleNodeIds();
+        if (accessibleIds === null) {
+          // 超级管理员，选中第一个根节点
+          const rootNodes = orgs.filter(org => !org.parentId);
+          if (rootNodes.length > 0) {
+            selectEnterprise(rootNodes[0].id);
+          }
+        } else if (accessibleIds.length > 0) {
+          // 子层级管理员，选中第一个可访问的
+          selectEnterprise(accessibleIds[0]);
+        }
       }
     });
 
@@ -1103,67 +1268,264 @@
     let currentEnterpriseMembers = []; // 存储当前企业的所有成员，用于筛选
     let filteredMemberList = []; // 存储当前显示的成员列表（用于编辑/删除时通过索引查找）
     let editingMemberIndex = -1; // 当前编辑的成员索引，-1表示新增
+    
+    // 获取当前登录用户（模拟，实际应该从session或token获取）
+    function getCurrentUser() {
+      // 模拟当前用户是超级管理员，可以看到所有节点
+      // 如果是子层级管理员，应该返回对应的用户信息
+      return mockData.users.find(u => u.role === "超级管理员") || mockData.users[0];
+    }
+    
+    // 获取用户有权限查看的节点ID列表
+    function getAccessibleNodeIds() {
+      const currentUser = getCurrentUser();
+      if (!currentUser) return null; // 无用户，返回null表示无权限
+      
+      // 超级管理员可以看到所有节点
+      if (currentUser.role === "超级管理员") {
+        return null; // null表示所有节点
+      }
+      
+      // 查找用户管理的组织节点
+      const orgs = mockData.organizations || mockData.enterprises;
+      const managedNode = orgs.find(org => org.adminId === currentUser.id);
+      
+      if (!managedNode) {
+        // 如果没有找到管理的节点，可能是通过enterprise字段关联的（向后兼容）
+        const nodeByName = orgs.find(org => org.name === currentUser.enterprise);
+        if (nodeByName) {
+          // 返回该节点及其所有子节点
+          return getAllDescendantIds(nodeByName.id);
+        }
+        return []; // 无权限
+      }
+      
+      // 返回该节点及其所有子节点
+      return getAllDescendantIds(managedNode.id);
+    }
+    
+    // 检查节点是否在可访问列表中
+    function isNodeAccessible(nodeId) {
+      const accessibleIds = getAccessibleNodeIds();
+      if (accessibleIds === null) return true; // null表示所有节点都可访问
+      return accessibleIds.includes(nodeId);
+    }
+    
+    // 获取可访问的节点列表（用于创建子节点时的父节点选择）
+    function getAccessibleNodes() {
+      const orgs = mockData.organizations || mockData.enterprises;
+      const accessibleIds = getAccessibleNodeIds();
+      
+      if (accessibleIds === null) {
+        return orgs; // 所有节点
+      }
+      
+      return orgs.filter(org => accessibleIds.includes(org.id));
+    }
 
+    // 存储展开的节点ID
+    let expandedNodes = new Set();
+    
+    // 获取节点的所有子节点
+    function getChildrenNodes(parentId) {
+      const orgs = mockData.organizations || mockData.enterprises;
+      return orgs.filter(org => org.parentId === parentId);
+    }
+    
+    // 获取节点的所有后代节点ID（用于权限过滤）
+    function getAllDescendantIds(nodeId) {
+      const result = [nodeId];
+      const children = getChildrenNodes(nodeId);
+      children.forEach(child => {
+        result.push(...getAllDescendantIds(child.id));
+      });
+      return result;
+    }
+    
+    // 渲染单个树节点
+    function renderTreeNode(node, level = 0, parentExpanded = true) {
+      const children = getChildrenNodes(node.id);
+      const hasChildren = children.length > 0;
+      const isExpanded = expandedNodes.has(node.id);
+      const isSelected = currentEnterpriseId === node.id;
+      
+      const item = document.createElement('div');
+      item.className = `tree-node ${!parentExpanded ? 'hidden' : ''}`;
+      item.setAttribute('data-node-id', node.id);
+      
+      const indent = level * 20; // 每级缩进20px
+      
+      item.innerHTML = `
+        <div class="flex items-center justify-between p-2 rounded-lg mb-1 transition-colors hover:bg-gray-50 ${isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : ''}" style="padding-left: ${indent + 8}px;">
+          <div class="flex items-center space-x-2 flex-1" onclick="selectEnterprise(${node.id})">
+            ${hasChildren ? `
+              <button onclick="event.stopPropagation(); toggleNode(${node.id})" class="flex-shrink-0 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                <svg class="w-4 h-4 transform transition-transform ${isExpanded ? 'rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
+            ` : '<div class="w-5"></div>'}
+            <div class="flex-shrink-0">
+              <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm">
+                ${node.name.substring(0, 1)}
+              </span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center space-x-2">
+                <p class="text-sm font-medium text-gray-900 truncate">${node.name}</p>
+                <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">${node.type || '企业'}</span>
+              </div>
+              <p class="text-xs text-gray-500">${node.projects ? node.projects.length : 0} 个项目</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
+            <button onclick="openAddEnterpriseModal(${node.id})" class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded" title="添加子节点">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `;
+      
+      return item;
+    }
+    
+    // 切换节点展开/折叠
+    window.toggleNode = function(nodeId) {
+      if (expandedNodes.has(nodeId)) {
+        expandedNodes.delete(nodeId);
+      } else {
+        expandedNodes.add(nodeId);
+      }
+      renderEnterpriseTree();
+    }
+    
+    // 渲染整个树
     function renderEnterpriseTree() {
       const treeContainer = document.getElementById('enterprise-tree');
       treeContainer.innerHTML = '';
-
-      mockData.enterprises.forEach(ent => {
-        const item = document.createElement('div');
-        item.className = `group cursor-pointer p-3 rounded-lg mb-1 transition-colors hover:bg-gray-50 ${currentEnterpriseId === ent.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`;
-        item.onclick = () => selectEnterprise(ent.id);
+      
+      const orgs = mockData.organizations || mockData.enterprises;
+      const accessibleIds = getAccessibleNodeIds();
+      
+      // 获取根节点（parentId为null的节点），并根据权限过滤
+      let rootNodes = orgs.filter(org => !org.parentId);
+      
+      // 如果不是超级管理员，只显示有权限的根节点
+      if (accessibleIds !== null) {
+        rootNodes = rootNodes.filter(org => accessibleIds.includes(org.id));
+      }
+      
+      // 递归渲染树
+      function renderNodeRecursive(node, level = 0, parentExpanded = true) {
+        // 检查权限
+        if (!isNodeAccessible(node.id)) {
+          return;
+        }
         
-        item.innerHTML = `
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <div class="flex-shrink-0">
-                <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm">
-                  ${ent.name.substring(0, 1)}
-                </span>
-              </div>
-              <div>
-                <p class="text-sm font-medium text-gray-900 truncate" style="max-width: 140px;">${ent.name}</p>
-                <p class="text-xs text-gray-500">${ent.projects.length} 个项目</p>
-              </div>
-            </div>
-            <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-          </div>
-        `;
-        treeContainer.appendChild(item);
+        const nodeElement = renderTreeNode(node, level, parentExpanded);
+        treeContainer.appendChild(nodeElement);
+        
+        const children = getChildrenNodes(node.id);
+        const isExpanded = expandedNodes.has(node.id);
+        
+        if (children.length > 0 && isExpanded) {
+          children.forEach(child => {
+            renderNodeRecursive(child, level + 1, true);
+          });
+        }
+      }
+      
+      rootNodes.forEach(root => {
+        renderNodeRecursive(root, 0, true);
       });
+      
+      // 如果没有根节点，显示提示
+      if (rootNodes.length === 0) {
+        const currentUser = getCurrentUser();
+        if (currentUser && currentUser.role !== "超级管理员") {
+          treeContainer.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">您没有管理任何组织节点</div>';
+        } else {
+          treeContainer.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">暂无组织节点，请创建根节点</div>';
+        }
+      }
     }
 
     function selectEnterprise(id) {
+      // 权限检查
+      if (!isNodeAccessible(id)) {
+        alert('您没有权限查看此节点');
+        return;
+      }
+      
       currentEnterpriseId = id;
-      const ent = mockData.enterprises.find(e => e.id === id);
+      const orgs = mockData.organizations || mockData.enterprises;
+      const ent = orgs.find(e => e.id === id);
       if (!ent) return;
+
+      // 获取当前节点及其所有子节点的ID
+      const nodeIds = getAllDescendantIds(id);
+      
+      // 聚合所有相关节点的数据
+      const relatedNodes = orgs.filter(org => nodeIds.includes(org.id));
 
       // 更新树的高亮状态
       renderEnterpriseTree();
 
       // 更新详情 (概览 Tab)
       document.getElementById('detail-name').textContent = ent.name;
-      // document.getElementById('detail-desc').textContent = ent.description; // Removed
       const contactText = ent.contactInfo ? ent.contactInfo.split('，')[0].replace('联系人：', '') : '-';
       document.getElementById('detail-contact').textContent = contactText;
       document.getElementById('detail-date').textContent = ent.createdAt || '-';
-      document.getElementById('detail-projects-count').textContent = ent.projects.length;
-      // detail-quota is now a link, so we keep the "查看详情" text which is already in HTML 
+      
+      // 聚合所有子节点的项目
+      let allProjects = [];
+      relatedNodes.forEach(node => {
+        if (node.projects && node.projects.length > 0) {
+          allProjects = allProjects.concat(node.projects);
+        }
+      });
+      document.getElementById('detail-projects-count').textContent = allProjects.length;
 
-      // 渲染资源卡片
-      renderResourceGrid(ent.quota || {});
+      // 聚合配额数据（当前节点及其所有子节点）
+      const aggregatedQuota = {
+        storage: { total: 0, used: 0, unit: "GB" },
+        baseLicense: { total: 0, used: 0 },
+        premiumLicense: { total: 0, used: 0 },
+        aiTokens: { total: 0, used: 0 },
+        liveStream: { total: 0, used: 0, unit: "分钟" }
+      };
+      
+      relatedNodes.forEach(node => {
+        if (node.quota) {
+          aggregatedQuota.storage.total += node.quota.storage?.total || 0;
+          aggregatedQuota.storage.used += node.quota.storage?.used || 0;
+          aggregatedQuota.baseLicense.total += node.quota.baseLicense?.total || 0;
+          aggregatedQuota.baseLicense.used += node.quota.baseLicense?.used || 0;
+          aggregatedQuota.premiumLicense.total += node.quota.premiumLicense?.total || 0;
+          aggregatedQuota.premiumLicense.used += node.quota.premiumLicense?.used || 0;
+          aggregatedQuota.aiTokens.total += node.quota.aiTokens?.total || 0;
+          aggregatedQuota.aiTokens.used += node.quota.aiTokens?.used || 0;
+          aggregatedQuota.liveStream.total += node.quota.liveStream?.total || 0;
+          aggregatedQuota.liveStream.used += node.quota.liveStream?.used || 0;
+        }
+      });
 
-      // 更新图表 (概览 Tab)
-      updateChart(ent);
+      // 渲染资源卡片（使用聚合后的配额）
+      renderResourceGrid(aggregatedQuota);
 
-      // 保存当前企业的所有项目
-      currentEnterpriseProjects = ent.projects || [];
+      // 更新图表 (概览 Tab) - 使用聚合后的配额
+      updateChart({ ...ent, quota: aggregatedQuota });
+
+      // 保存当前节点及其所有子节点的项目
+      currentEnterpriseProjects = allProjects;
       // 渲染项目列表
       renderProjectList(currentEnterpriseProjects);
 
-      // 收集所有设备数据
+      // 收集所有设备数据（从所有相关节点的项目中）
       currentEnterpriseDevices = [];
-      ent.projects.forEach(proj => {
+      allProjects.forEach(proj => {
         if(proj.devices && proj.devices.length > 0) {
           proj.devices.forEach(dev => {
             currentEnterpriseDevices.push({
@@ -1175,19 +1537,24 @@
       });
       renderDeviceList(currentEnterpriseDevices);
 
-      // 收集企业成员数据（只显示企业直属用户，不包括项目团队成员）
+      // 收集成员数据（当前节点及其所有子节点的成员）
       currentEnterpriseMembers = [];
       
-      // 企业成员 (从 mockData.users 筛选)
+      // 从 mockData.users 筛选相关节点的成员
       if (typeof mockData.users !== 'undefined') {
-        const entUsers = mockData.users.filter(u => u.enterprise === ent.name);
-        entUsers.forEach(u => {
-          currentEnterpriseMembers.push({
-            phone: u.phone,
-            name: u.fullName,
-            role: u.role,
-            org: '企业直属',
-            memberType: '企业成员'
+        relatedNodes.forEach(node => {
+          // 通过organizationId或enterprise名称匹配
+          const nodeUsers = mockData.users.filter(u => 
+            u.organizationId === node.id || u.enterprise === node.name
+          );
+          nodeUsers.forEach(u => {
+            currentEnterpriseMembers.push({
+              phone: u.phone,
+              name: u.fullName,
+              role: u.role,
+              org: node.name,
+              memberType: '组织成员'
+            });
           });
         });
       }
@@ -1257,7 +1624,7 @@
         return;
       }
 
-      // 只显示企业成员
+      // 只显示组织成员
       members.forEach((member, index) => {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-gray-50';
@@ -1340,7 +1707,8 @@
         return;
       }
 
-      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      const orgs = mockData.organizations || mockData.enterprises;
+      const ent = orgs.find(e => e.id === currentEnterpriseId);
       if (!ent) return;
 
       if (editingMemberIndex === -1) {
@@ -1370,13 +1738,13 @@
         }
         mockData.users.push(newUser);
 
-        // 添加到当前企业成员列表
+        // 添加到当前组织成员列表
         currentEnterpriseMembers.push({
           phone: phone,
           name: name,
           role: role,
-          org: '企业直属',
-          memberType: '企业成员'
+            org: '组织直属',
+            memberType: '组织成员'
         });
 
         alert('成员添加成功！');
@@ -1436,10 +1804,13 @@
 
     // 新建项目相关函数（与project.html共享逻辑）
     function openCreateProjectModal() {
-      // 填充企业下拉框，默认选择当前企业
+      // 填充组织节点下拉框，默认选择当前节点
       const entSelect = document.getElementById('new-project-enterprise');
       entSelect.innerHTML = '';
-      mockData.enterprises.forEach(ent => {
+      const orgs = mockData.organizations || mockData.enterprises;
+      // 只显示当前用户有权限的节点
+      const accessibleNodes = getAccessibleNodes();
+      accessibleNodes.forEach(ent => {
         const option = document.createElement('option');
         option.value = ent.id;
         option.textContent = ent.name;
@@ -1532,15 +1903,16 @@
           {
             id: Date.now() + 1,
             name: adminName,
-            role: "项目管理员",
+            role: "项目平台主管",
             phone: adminPhone
           }
         ],
         subcontractors: []
       };
 
-      // 2. 将项目添加到对应企业
-      const enterprise = mockData.enterprises.find(e => e.id === entId);
+      // 2. 将项目添加到对应组织节点
+      const orgs = mockData.organizations || mockData.enterprises;
+      const enterprise = orgs.find(e => e.id === entId);
       if (enterprise) {
         enterprise.projects.push(newProject);
       }
@@ -1558,7 +1930,7 @@
           username: adminPhone,
           fullName: adminName,
           phone: adminPhone,
-          role: "项目管理员",
+          role: "项目平台主管",
           enterprise: enterprise ? enterprise.name : "未知企业",
           project: name,
           status: "激活",
@@ -1765,7 +2137,8 @@
 
     function generateQuotaConsumptionData(resourceType = null) {
       quotaConsumptionData = [];
-      const ent = mockData.enterprises.find(e => e.id === currentEnterpriseId);
+      const orgs = mockData.organizations || mockData.enterprises;
+      const ent = orgs.find(e => e.id === currentEnterpriseId);
       if (!ent) return;
 
       // 资源类型映射
