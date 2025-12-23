@@ -7,7 +7,7 @@ function renderLayout(activePageTitle) {
     <div class="h-16 flex items-center px-6 border-b border-gray-200">
       <div class="flex items-center space-x-2 text-blue-600">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-        <span class="text-lg font-bold">AdminSystem</span>
+        <span class="text-lg font-bold">安之眸企业管理系统</span>
       </div>
     </div>
     
@@ -36,6 +36,22 @@ function renderLayout(activePageTitle) {
         <h1 class="text-xl font-semibold text-gray-800">${activePageTitle}</h1>
       </div>
       <div class="flex items-center space-x-4">
+        <!-- 企业切换下拉框 -->
+        <div class="relative">
+          <button onclick="toggleEnterpriseDropdown()" class="flex items-center space-x-2 px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+            <span class="text-sm font-medium text-gray-800" id="current-enterprise-name">科技发展有限公司</span>
+            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <!-- 企业下拉菜单 -->
+          <div id="enterprise-dropdown" class="hidden absolute left-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50 border border-gray-200 max-h-96 overflow-y-auto">
+            <div class="py-2" id="enterprise-dropdown-content">
+              <!-- 企业列表将通过JS动态填充 -->
+            </div>
+          </div>
+        </div>
+        
         <div class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
           <div class="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">A</div>
           <div class="hidden md:block text-sm">
@@ -84,5 +100,159 @@ function renderNavItem(href, text, iconPath, isActive) {
       ${text}
     </a>
   `;
+}
+
+// 企业切换相关功能
+let currentEnterprise = null;
+let enterpriseList = [];
+
+// 初始化企业数据
+function initEnterpriseData() {
+  // 从mockData获取企业数据（使用树形结构）
+  if (typeof mockData !== 'undefined' && mockData.enterprisesTree) {
+    enterpriseList = mockData.enterprisesTree;
+    
+    // 默认选择第一个企业
+    if (enterpriseList.length > 0) {
+      const savedEnterpriseId = localStorage.getItem('currentEnterpriseId');
+      if (savedEnterpriseId) {
+        currentEnterprise = findEnterpriseById(enterpriseList, parseInt(savedEnterpriseId));
+      }
+      if (!currentEnterprise) {
+        currentEnterprise = enterpriseList[0];
+      }
+      updateCurrentEnterpriseName();
+      renderEnterpriseDropdown();
+    }
+  }
+}
+
+
+// 根据ID查找企业
+function findEnterpriseById(list, id) {
+  for (let ent of list) {
+    if (ent.id === id) return ent;
+    if (ent.children && ent.children.length > 0) {
+      const found = findEnterpriseById(ent.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+// 更新当前企业名称显示
+function updateCurrentEnterpriseName() {
+  const nameEl = document.getElementById('current-enterprise-name');
+  if (nameEl && currentEnterprise) {
+    nameEl.textContent = currentEnterprise.name;
+  }
+}
+
+// 切换企业下拉菜单显示/隐藏
+function toggleEnterpriseDropdown() {
+  const dropdown = document.getElementById('enterprise-dropdown');
+  if (dropdown) {
+    dropdown.classList.toggle('hidden');
+  }
+}
+
+// 渲染企业下拉列表
+function renderEnterpriseDropdown() {
+  const container = document.getElementById('enterprise-dropdown-content');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  if (enterpriseList.length === 0) {
+    container.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500 text-center">暂无可用企业</div>';
+    return;
+  }
+  
+  // 递归渲染企业树
+  function renderEnterpriseItem(enterprise, level = 0) {
+    const isActive = currentEnterprise && currentEnterprise.id === enterprise.id;
+    const indent = level * 16; // 每级缩进16px
+    
+    const item = document.createElement('div');
+    item.className = `px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors ${isActive ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'}`;
+    item.style.paddingLeft = `${16 + indent}px`;
+    item.innerHTML = `
+      <div class="flex items-center space-x-2">
+        ${level > 0 ? '<svg class="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>' : ''}
+        <span class="text-sm">${enterprise.name}</span>
+        ${isActive ? '<svg class="h-4 w-4 ml-auto text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>' : ''}
+      </div>
+    `;
+    
+    item.onclick = () => switchEnterprise(enterprise);
+    container.appendChild(item);
+    
+    // 如果有子企业，递归渲染
+    if (enterprise.children && enterprise.children.length > 0) {
+      enterprise.children.forEach(child => renderEnterpriseItem(child, level + 1));
+    }
+  }
+  
+  enterpriseList.forEach(ent => renderEnterpriseItem(ent, 0));
+}
+
+// 切换到指定企业
+function switchEnterprise(enterprise) {
+  currentEnterprise = enterprise;
+  localStorage.setItem('currentEnterpriseId', enterprise.id);
+  updateCurrentEnterpriseName();
+  toggleEnterpriseDropdown();
+  
+  // 触发企业切换事件，让各页面可以监听并刷新数据
+  window.dispatchEvent(new CustomEvent('enterpriseChanged', { detail: enterprise }));
+  
+  // 提示用户
+  showToast(`已切换至：${enterprise.name}`);
+}
+
+// 显示提示信息
+function showToast(message) {
+  // 移除已存在的toast
+  const existingToast = document.getElementById('toast-notification');
+  if (existingToast) {
+    existingToast.remove();
+  }
+  
+  const toast = document.createElement('div');
+  toast.id = 'toast-notification';
+  toast.className = 'fixed top-20 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2 animate-fade-in';
+  toast.innerHTML = `
+    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <span>${message}</span>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // 3秒后自动移除
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// 点击外部关闭下拉菜单
+document.addEventListener('click', function(event) {
+  const dropdown = document.getElementById('enterprise-dropdown');
+  const button = event.target.closest('[onclick="toggleEnterpriseDropdown()"]');
+  
+  if (dropdown && !dropdown.contains(event.target) && !button) {
+    dropdown.classList.add('hidden');
+  }
+});
+
+// 页面加载时初始化企业数据
+if (typeof mockData !== 'undefined') {
+  window.addEventListener('DOMContentLoaded', function() {
+    // 延迟执行，确保DOM完全加载
+    setTimeout(initEnterpriseData, 100);
+  });
 }
 

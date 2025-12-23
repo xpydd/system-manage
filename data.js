@@ -304,6 +304,38 @@ const mockData = {
   get enterprises() {
     return this.organizations;
   },
+  
+  // 获取树形结构的企业数据（用于企业切换功能）
+  get enterprisesTree() {
+    // 构建树形结构，包含children字段
+    const buildTree = (items) => {
+      const map = new Map();
+      const result = [];
+      
+      // 首先创建所有节点的副本
+      items.forEach(item => {
+        map.set(item.id, { ...item, children: [] });
+      });
+      
+      // 构建树形结构
+      map.forEach(item => {
+        if (item.parentId === null || item.parentId === undefined) {
+          // 根节点
+          result.push(item);
+        } else {
+          // 子节点
+          const parent = map.get(item.parentId);
+          if (parent) {
+            parent.children.push(item);
+          }
+        }
+      });
+      
+      return result;
+    };
+    
+    return buildTree(this.organizations);
+  },
 
   users: [
     {
